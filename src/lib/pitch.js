@@ -3,7 +3,7 @@ export const W = 120;
 export const H = 80;
 
 export const FULL = [-2, -2, 124, 84];
-export const HALF = [56, -2, 68, 84];
+export const FULL_V = [-2, -2, 84, 124];
 
 // Lines of the pitch as SVG primitives (rendered by Pitch.jsx).
 export const LINES = [
@@ -41,8 +41,13 @@ export function wavyPath([x1, y1], [x2, y2], amp = 0.9, wavelength = 4) {
   return d;
 }
 
-// Zoom on the attacking half when the whole move happens there.
-export function viewFor(goal) {
-  const xs = [goal.start[0], ...goal.chain.flatMap((a) => [a.s[0], a.e[0]])];
-  return Math.min(...xs) >= 58 ? HALF : FULL;
+// Vertical pitch for portrait phones: attack goes up, the team's left stays on the left.
+// Pitch coords (x, y) -> screen (y, 120 - x).
+export const projector = (vertical) => (vertical ? ([x, y]) => [y, 120 - x] : ([x, y]) => [x, y]);
+
+// Rect given in pitch coords, returned as a normalised SVG rect in screen coords.
+export function projRect(P, x, y, w, h) {
+  const [ax, ay] = P([x, y]);
+  const [bx, by] = P([x + w, y + h]);
+  return { x: Math.min(ax, bx), y: Math.min(ay, by), width: Math.abs(bx - ax), height: Math.abs(by - ay) };
 }

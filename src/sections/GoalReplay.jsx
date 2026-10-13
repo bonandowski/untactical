@@ -4,12 +4,13 @@ import Selector from '../components/Selector.jsx';
 import Scrubber from '../components/Scrubber.jsx';
 import Legend from '../components/Legend.jsx';
 import { useJson } from '../lib/data.js';
-import { FULL, clamp01, ease, lerp, wavyPath } from '../lib/pitch.js';
+import { clamp01, ease, lerp, projector, wavyPath } from '../lib/pitch.js';
+import useVertical from '../lib/useVertical.js';
 import { TT } from '../lib/theme.js';
 import { matchKits } from '../lib/kits.jsx';
 
-// Dybala vs Lazio, 4 Dec 2015: 11 passes from his own half, xG 0.022.
-export const DEFAULT_GOAL = '3879637-1';
+// Milito vs Bayern, Champions League final 2010, 70': the feint on Van Buyten.
+export const DEFAULT_GOAL = '18235-2';
 
 const TAGS = ['tutti', 'contropiede', 'azione manovrata', 'assolo', 'palla inattiva', 'rigore', 'azione'];
 const KIND = { pass: 'Passaggio', carry: 'Conduzione', dribble: 'Dribbling' };
@@ -43,6 +44,10 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
   const [speed, setSpeed] = useState(1);
   const [tip, setTip] = useState(null);
   const boxRef = useRef(null);
+  const tipTimer = useRef(null);
+  const vertical = useVertical();
+  const P = projector(vertical);
+  const [drawer, setDrawer] = useState(() => !(window.matchMedia?.('(max-width: 700px)').matches));
 
   const { teams, goals: allGoals, matches } = index;
   const entry = allGoals.find((g) => g.id === goalId) || allGoals.find((g) => g.id === DEFAULT_GOAL) || allGoals[0];
@@ -105,10 +110,18 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
   const kits = matchKits(teamName(teams, entry.home), teamName(teams, entry.away));
   const T = tl ? t * tl.total : 0;
 
+  // Hover with a mouse, tap on touch screens (the tap tooltip fades on its own).
   const showTip = (e, text) => {
     const box = boxRef.current.getBoundingClientRect();
     setTip({ x: e.clientX - box.left, y: e.clientY - box.top, text });
+    clearTimeout(tipTimer.current);
+    if (e.pointerType && e.pointerType !== 'mouse') tipTimer.current = setTimeout(() => setTip(null), 2500);
   };
+  const tipProps = (text) => ({
+    onPointerMove: (e) => { if (e.pointerType === 'mouse') showTip(e, text); },
+    onPointerDown: (e) => showTip(e, text),
+    onPointerLeave: (e) => { if (e.pointerType === 'mouse') setTip(null); },
+  });
 
   let ball = null;
   let ffOpacity = 0;
@@ -171,68 +184,79 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
         <p className="tt-sub">{allGoals.length} gol veri, ricostruiti passaggio per passaggio. Scegli, premi play, giudica.</p>
       </header>
 
-      <div className="controls">
-        <Selector
-          label="COMPETIZIONE" value={entry.comp}
-          onChange={(c) => { const g = goals.find((x) => x.comp === c); if (g) setGoalId(g.id); }}
-          options={index.competitions.map((c) => ({ value: c.key, label: c.name.toUpperCase() }))}
-        />
-        <Selector
-          label="SQUADRA" value={entry.team}
-          onChange={(s) => { const g = compGoals.find((x) => x.team === s); if (g) setGoalId(g.id); }}
-          options={teamSlugs.map((s) => teamName(teams, s)).sort((a, b) => a.name.localeCompare(b.name)).map((tm) => ({ value: tm.slug, label: tm.name.toUpperCase() }))}
-        />
-        <Selector
-          label="PARTITA" value={entry.match_id}
-          onChange={(mid) => { const g = teamGoals.find((x) => x.match_id === +mid); if (g) setGoalId(g.id); }}
-          options={matchIds.map((mid) => ({ value: mid, label: matchLabel(mid) }))}
-        />
-        <Selector
-          label="GOL" value={entry.id} onChange={setGoalId}
-          options={teamGoals.filter((g) => g.match_id === entry.match_id).map((g) => ({ value: g.id, label: `${g.minute}' ${g.scorer.toUpperCase()}` }))}
-        />
+      <div className="pager pager-top">
+        <button type="button" className="btn" onClick={() => step(-1)} aria-label="Gol precedente">◀</button>
+        <span className="num">GOL {pos + 1}/{teamGoals.length} · {team.code}</span>
+        <button type="button" className="btn" onClick={() => step(1)} aria-label="Gol successivo">▶</button>
+        <button type="button" className={`btn btn-drawer${drawer ? ' on' : ''}`} aria-expanded={drawer} aria-controls="gol-drawer" onClick={() => setDrawer(!drawer)}>
+          {drawer ? '✕ CHIUDI' : '☰ CAMBIA GOL'}
+        </button>
       </div>
 
-      <div className="controls controls-2">
-        <div className="chips" role="group" aria-label="Filtra per tipo di gol">
-          {TAGS.map((x) => (
-            <button key={x} type="button" className={`chip${tag === x ? ' on' : ''}`} aria-pressed={tag === x} onClick={() => setTag(x)}>
-              {x.toUpperCase()}
-            </button>
-          ))}
+      <div id="gol-drawer" className="drawer" hidden={!drawer}>
+        <div className="controls">
+          <Selector
+            label="COMPETIZIONE" value={entry.comp}
+            onChange={(c) => { const g = goals.find((x) => x.comp === c); if (g) setGoalId(g.id); }}
+            options={index.competitions.map((c) => ({ value: c.key, label: c.name.toUpperCase() }))}
+          />
+          <Selector
+            label="SQUADRA" value={entry.team}
+            onChange={(s2) => { const g = compGoals.find((x) => x.team === s2); if (g) setGoalId(g.id); }}
+            options={teamSlugs.map((s2) => teamName(teams, s2)).sort((x, y) => x.name.localeCompare(y.name)).map((tm) => ({ value: tm.slug, label: tm.name.toUpperCase() }))}
+          />
+          <Selector
+            label="PARTITA" value={entry.match_id}
+            onChange={(mid) => { const g = teamGoals.find((x) => x.match_id === +mid); if (g) setGoalId(g.id); }}
+            options={matchIds.map((mid) => ({ value: mid, label: matchLabel(mid) }))}
+          />
+          <Selector
+            label="GOL" value={entry.id} onChange={setGoalId}
+            options={teamGoals.filter((g) => g.match_id === entry.match_id).map((g) => ({ value: g.id, label: `${g.minute}' ${g.scorer.toUpperCase()}` }))}
+          />
         </div>
-        <label className="field search">
-          <span className="field-label">CERCA MARCATORE</span>
-          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="es. HIGUAÍN" aria-label="Cerca marcatore" />
-        </label>
-      </div>
 
-      {results && (
-        <div className="results" role="region" aria-label="Risultati ricerca">
-          {results.length === 0 ? (
-            <p className="empty">PAGINA NON DISPONIBILE. NESSUN GOL PER «{query.toUpperCase()}». RIPROVARE DOPO IL 90'.</p>
-          ) : (
-            <ul>
-              {results.map((g) => (
-                <li key={g.id}>
-                  <button type="button" className={g.id === entry.id ? 'on' : ''} onClick={() => { setGoalId(g.id); setQuery(''); }}>
-                    <span className="num">{g.minute}'</span> {g.scorer.toUpperCase()} · {teamName(teams, g.home).code}-{teamName(teams, g.away).code} · xG {g.xg.toFixed(2)}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+        <div className="controls controls-2">
+          <div className="chips chips-scroll" role="group" aria-label="Filtra per tipo di gol">
+            {TAGS.map((x) => (
+              <button key={x} type="button" className={`chip${tag === x ? ' on' : ''}`} aria-pressed={tag === x} onClick={() => setTag(x)}>
+                {x.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <label className="field search">
+            <span className="field-label">CERCA MARCATORE</span>
+            <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="es. MILITO" aria-label="Cerca marcatore" />
+          </label>
         </div>
-      )}
+
+        {results && (
+          <div className="results" role="region" aria-label="Risultati ricerca">
+            {results.length === 0 ? (
+              <p className="empty">PAGINA NON DISPONIBILE. NESSUN GOL PER «{query.toUpperCase()}». RIPROVARE DOPO IL 90'.</p>
+            ) : (
+              <ul>
+                {results.map((g) => (
+                  <li key={g.id}>
+                    <button type="button" className={g.id === entry.id ? 'on' : ''} onClick={() => { setGoalId(g.id); setQuery(''); if (vertical) setDrawer(false); }}>
+                      <span className="num">{g.minute}'</span> {g.scorer.toUpperCase()} · {teamName(teams, g.home).code}-{teamName(teams, g.away).code} · xG {g.xg.toFixed(2)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="stage">
         <div className="stage-main">
-          <div className="pitch-box" ref={boxRef} onMouseLeave={() => setTip(null)}>
+          <div className={`pitch-box${vertical ? ' pitch-box-v' : ''}`} ref={boxRef}>
             {!goal && (
               <div className="loading">{loading ? 'PAGINA IN ARRIVO... 101... 102... 103...' : 'SEGNALE ASSENTE'}</div>
             )}
             {goal && tl && (
-              <Pitch view={FULL} label={`Replay del gol di ${goal.scorer.name} al minuto ${goal.minute}`} goalGlow={done ? 1 : shotP}>
+              <Pitch vertical={vertical} label={`Replay del gol di ${goal.scorer.name} al minuto ${goal.minute}`} goalGlow={done ? 1 : shotP}>
                 <defs>
                   <marker id="arrow" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
                     <path d="M0,0L6,3L0,6z" fill={TT.yellow} />
@@ -242,7 +266,7 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
                 {/* Phase 0: ghost of the whole move */}
                 <polyline
                   className="ghost"
-                  points={[...goal.chain.flatMap((a) => [a.s, a.e]), goal.start, goal.end.slice(0, 2)].map((p) => p.join(',')).join(' ')}
+                  points={[...goal.chain.flatMap((a) => [a.s, a.e]), goal.start, goal.end.slice(0, 2)].map((p) => P(p).join(',')).join(' ')}
                   style={{ opacity: 0.45 * clamp01(T / tl.intro) }}
                 />
 
@@ -250,17 +274,16 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
                   const p = progress(T, tl.actions[i]);
                   if (p <= 0) return null;
                   const tipText = `${KIND[a.k]}${a.x ? ` ${a.x}` : ''} · ${a.p.toUpperCase()}${a.ok ? '' : ' (non riuscito)'}`;
-                  const common = {
-                    pathLength: 1, strokeDasharray: `${p} 1`,
-                    onMouseMove: (e) => showTip(e, tipText), onMouseLeave: () => setTip(null),
-                  };
+                  const common = { pathLength: 1, strokeDasharray: `${p} 1`, ...tipProps(tipText) };
+                  const s0 = P(a.s);
+                  const e0 = P(a.e);
                   if (a.k === 'pass') {
-                    return <path key={i} d={`M${a.s.join(',')}L${a.e.join(',')}`} className="act act-pass" markerEnd={p >= 1 ? 'url(#arrow)' : undefined} {...common} />;
+                    return <path key={i} d={`M${s0.join(',')}L${e0.join(',')}`} className="act act-pass" markerEnd={p >= 1 ? 'url(#arrow)' : undefined} {...common} />;
                   }
-                  if (a.k === 'carry') return <path key={i} d={wavyPath(a.s, a.e)} className="act act-carry" {...common} />;
+                  if (a.k === 'carry') return <path key={i} d={wavyPath(s0, e0)} className="act act-carry" {...common} />;
                   return (
-                    <g key={i} onMouseMove={common.onMouseMove} onMouseLeave={common.onMouseLeave}>
-                      <circle cx={a.s[0]} cy={a.s[1]} r={2.6 * p} className="act-dribble" />
+                    <g key={i} {...tipProps(tipText)}>
+                      <circle cx={s0[0]} cy={s0[1]} r={2.6 * p} className="act-dribble" />
                     </g>
                   );
                 })}
@@ -272,8 +295,9 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
                     const cls = `pl ${pl.tm ? 'pl-mate' : 'pl-opp'}${pl.exact ? ' pl-exact' : ' pl-est'}${pl.gk ? ' pl-gk' : ''}${actor ? ' pl-actor' : ''}${recv ? ' pl-recv' : ''}${actor && shooting ? ' pl-shooter' : ''}`;
                     const k = kits[pl.tm ? entry.team : entry.opp];
                     const tipText = `#${pl.j ?? '?'} ${pl.n.toUpperCase()} · ${pl.r} · ${pl.exact ? 'POSIZIONE RILEVATA' : 'POSIZIONE STIMATA'}`;
+                    const [px, py] = P([pl.x, pl.y]);
                     return (
-                      <g key={pl.i} className={cls} transform={`translate(${pl.x},${pl.y})`} onMouseMove={(e) => showTip(e, tipText)} onMouseLeave={() => setTip(null)}>
+                      <g key={pl.i} className={cls} transform={`translate(${px},${py})`} {...tipProps(tipText)}>
                         <circle r={4} className="hit" />
                         <circle r={2.1} className="pl-dot" fill={k.fill} />
                         <text y={0.8} textAnchor="middle" className="pl-num" style={{ fill: k.kit.num, stroke: k.kit.num === '#111111' ? '#fff' : '#000' }}>{pl.j ?? ''}</text>
@@ -286,10 +310,10 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
                 </g>
 
                 {shotP > 0 && (
-                  <path d={`M${goal.start.join(',')}L${goal.end.slice(0, 2).join(',')}`} className="shot" pathLength={1} strokeDasharray={`${shotP} 1`} />
+                  <path d={`M${P(goal.start).join(',')}L${P(goal.end.slice(0, 2)).join(',')}`} className="shot" pathLength={1} strokeDasharray={`${shotP} 1`} />
                 )}
 
-                {ball && <circle cx={ball[0]} cy={ball[1]} r={1.1} className="ball" />}
+                {ball && <circle cx={P(ball)[0]} cy={P(ball)[1]} r={1.1} className="ball" />}
               </Pitch>
             )}
             {goal && done && (
@@ -317,11 +341,6 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
         </div>
 
         <aside className="panel" aria-label="Dettagli del gol">
-          <div className="pager">
-            <button type="button" className="btn" onClick={() => step(-1)} aria-label="Gol precedente">◀</button>
-            <span className="num">GOL {pos + 1}/{teamGoals.length} · {team.code}</span>
-            <button type="button" className="btn" onClick={() => step(1)} aria-label="Gol successivo">▶</button>
-          </div>
           {goal ? (
             <>
               <div className="scoreline">
