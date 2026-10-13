@@ -49,3 +49,13 @@ def test_coordinates_in_pitch():
 
 def test_no_cl_1999():
     assert not (OUT / "goals" / "3750240.json").exists()
+
+
+def test_network_juve_napoli():
+    net = json.loads((OUT / "networks" / "juventus.json").read_text())
+    m = next(x for x in net["matches"] if x["match_id"] == ZAZA_MATCH)
+    assert len(m["nodes"]) == 11
+    assert m["edges"] and all(c >= 2 for _, _, c in m["edges"])
+    assert m["res"] == "V" and m["gf"] == 1 and m["ga"] == 0
+    assert 0 < m["kpi"]["poss"] < 100
+    assert all(0 <= s[0] < 24 for sectors in m["sonar"].values() for s in sectors)

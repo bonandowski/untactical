@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import GoalReplay from './sections/GoalReplay.jsx';
 import About from './sections/About.jsx';
 import Placeholder from './sections/Placeholder.jsx';
+import PassNetwork from './sections/PassNetwork.jsx';
 import { useJson } from './lib/data.js';
+import { KitDefs } from './lib/kits.jsx';
 
 export const PAGES = [
   { route: 'gol', page: 101, label: 'GOL', color: 'red' },
@@ -69,6 +71,7 @@ export default function App() {
   return (
     <div className="app">
       <a className="skip" href="#main">Salta al contenuto</a>
+      {index && <KitDefs teams={index.teams} />}
       <header className="topbar">
         <span className="num">P.{typed ? typed.padEnd(3, '_') : current.page} UNTACTICAL</span>
         <span className="topbar-mid">{notFound ? 'PAGINA NON DISPONIBILE' : 'IL TELEVIDEO DELLA TATTICA'}</span>
@@ -92,12 +95,7 @@ export default function App() {
         {error && <p className="loading">SEGNALE ASSENTE. CONTROLLARE L&apos;ANTENNA ({String(error.message)}).</p>}
         {!index && !error && <p className="loading">PAGINA IN ARRIVO... 101... 102... 103...</p>}
         {index && loc.route === 'gol' && <GoalReplay index={index} goalId={loc.arg} setGoalId={setGoalId} />}
-        {loc.route === 'rete' && (
-          <Placeholder
-            page={201} title="CHI PASSA A CHI"
-            text="Pass network e pass sonar: chi tocca palla, chi la nasconde, chi la passa sempre allo stesso amico. Lavori in corso, come lo stadio della Roma."
-          />
-        )}
+        {index && loc.route === 'rete' && <PassNetwork index={index} />}
         {loc.route === 'pressing' && (
           <Placeholder
             page={301} title="CHI PRESSA CHI"

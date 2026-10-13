@@ -18,40 +18,47 @@ CL = {
 }
 COMPETITIONS = [SERIE_A, CL]
 
-# Team identity: 3-letter code + primary/secondary colour (no logos, no trademarks).
+# Team identity: 3-letter code + kits drawn as SVG patterns (no logos, no trademarks).
+# Kit: pattern (solid | stripes | halves | band | diagonal), colours, number colour.
+def kit(pattern, colors, num="#ffffff"):
+    return {"p": pattern, "c": colors, "num": num}
+
+
+WHITE = kit("solid", ["#f4f4f4"], "#111111")
 TEAMS = {
-    "AC Milan": ("MIL", "#d6182b", "#111111"),
-    "AS Roma": ("ROM", "#8e1f2f", "#f0bc42"),
-    "Atalanta": ("ATA", "#1e71b8", "#111111"),
-    "Bologna": ("BOL", "#1a2f48", "#a21c26"),
-    "Carpi": ("CAR", "#e2231a", "#ffffff"),
-    "Chievo": ("CHI", "#ffe600", "#1d3c8f"),
-    "Empoli": ("EMP", "#0055a4", "#ffffff"),
-    "Fiorentina": ("FIO", "#6a2c91", "#ffffff"),
-    "Frosinone": ("FRO", "#ffd700", "#0047ab"),
-    "Genoa": ("GEN", "#a51d2d", "#002d62"),
-    "Hellas Verona": ("VER", "#ffd200", "#003a7d"),
-    "Inter Milan": ("INT", "#0068a8", "#111111"),
-    "Juventus": ("JUV", "#ffffff", "#111111"),
-    "Lazio": ("LAZ", "#87d8f7", "#ffffff"),
-    "Napoli": ("NAP", "#12a0d7", "#ffffff"),
-    "Palermo": ("PAL", "#f4a6c0", "#111111"),
-    "Sampdoria": ("SAM", "#1b5497", "#e30613"),
-    "Sassuolo": ("SAS", "#00a752", "#111111"),
-    "Torino": ("TOR", "#8a1e03", "#ffffff"),
-    "Udinese": ("UDI", "#f2f2f2", "#111111"),
-    # Champions League
-    "AS Monaco": ("MON", "#e51b22", "#ffffff"),
-    "Atlético Madrid": ("ATM", "#cb3524", "#262e61"),
-    "Barcelona": ("BAR", "#a50044", "#004d98"),
-    "Bayern Munich": ("BAY", "#dc052d", "#ffffff"),
-    "Borussia Dortmund": ("BVB", "#fde100", "#111111"),
-    "Chelsea": ("CHE", "#034694", "#ffffff"),
-    "FC Porto": ("POR", "#003893", "#ffffff"),
-    "Liverpool": ("LIV", "#c8102e", "#00b2a9"),
-    "Manchester United": ("MUN", "#da291c", "#fbe122"),
-    "Real Madrid": ("RMA", "#febe10", "#ffffff"),
-    "Tottenham Hotspur": ("TOT", "#ffffff", "#132257"),
+    # Serie A 2015/16: home kit, away kit
+    "AC Milan": ("MIL", kit("stripes", ["#d6182b", "#111111"]), WHITE),
+    "AS Roma": ("ROM", kit("solid", ["#8e1f2f"], "#f0bc42"), WHITE),
+    "Atalanta": ("ATA", kit("stripes", ["#1e71b8", "#111111"]), WHITE),
+    "Bologna": ("BOL", kit("stripes", ["#b3202c", "#1a2f6b"]), WHITE),
+    "Carpi": ("CAR", kit("stripes", ["#e2231a", "#ffffff"], "#111111"), kit("solid", ["#1b3c8c"])),
+    "Chievo": ("CHI", kit("solid", ["#ffe600"], "#1d3c8f"), WHITE),
+    "Empoli": ("EMP", kit("solid", ["#0055a4"]), WHITE),
+    "Fiorentina": ("FIO", kit("solid", ["#6a2c91"]), WHITE),
+    "Frosinone": ("FRO", kit("solid", ["#ffd700"], "#0047ab"), WHITE),
+    "Genoa": ("GEN", kit("halves", ["#b0172a", "#0b2c6b"]), WHITE),
+    "Hellas Verona": ("VER", kit("solid", ["#0b3c8c"], "#ffd200"), kit("solid", ["#ffd200"], "#0b3c8c")),
+    "Inter Milan": ("INT", kit("stripes", ["#0068a8", "#111111"]), WHITE),
+    "Juventus": ("JUV", kit("stripes", ["#ffffff", "#111111"], "#111111"), kit("solid", ["#1c1c1c"])),
+    "Lazio": ("LAZ", kit("solid", ["#87d8f7"], "#111111"), WHITE),
+    "Napoli": ("NAP", kit("solid", ["#12a0d7"]), WHITE),
+    "Palermo": ("PAL", kit("solid", ["#f4a6c0"], "#111111"), kit("solid", ["#1c1c1c"])),
+    "Sampdoria": ("SAM", kit("band", ["#1b5497", "#ffffff", "#e30613", "#111111"]), WHITE),
+    "Sassuolo": ("SAS", kit("stripes", ["#00a752", "#111111"]), WHITE),
+    "Torino": ("TOR", kit("solid", ["#8a1e03"]), WHITE),
+    "Udinese": ("UDI", kit("stripes", ["#ffffff", "#111111"], "#111111"), kit("solid", ["#1c1c1c"])),
+    # Champions League finalists
+    "AS Monaco": ("MON", kit("diagonal", ["#e51b22", "#ffffff"], "#111111"), WHITE),
+    "Atlético Madrid": ("ATM", kit("stripes", ["#cb3524", "#ffffff"], "#262e61"), kit("solid", ["#262e61"])),
+    "Barcelona": ("BAR", kit("stripes", ["#a50044", "#004d98"]), kit("solid", ["#f7d417"], "#a50044")),
+    "Bayern Munich": ("BAY", kit("solid", ["#dc052d"]), WHITE),
+    "Borussia Dortmund": ("BVB", kit("solid", ["#fde100"], "#111111"), kit("solid", ["#1c1c1c"], "#fde100")),
+    "Chelsea": ("CHE", kit("solid", ["#034694"]), WHITE),
+    "FC Porto": ("POR", kit("stripes", ["#003893", "#ffffff"], "#111111"), WHITE),
+    "Liverpool": ("LIV", kit("solid", ["#c8102e"]), WHITE),
+    "Manchester United": ("MUN", kit("solid", ["#da291c"]), WHITE),
+    "Real Madrid": ("RMA", kit("solid", ["#f4f4f4"], "#111111"), kit("solid", ["#3a2c6b"])),
+    "Tottenham Hotspur": ("TOT", kit("solid", ["#f4f4f4"], "#132257"), kit("solid", ["#132257"])),
 }
 
 ITALIAN_NAMES = {
@@ -73,13 +80,13 @@ def slugify(s: str) -> str:
 
 
 def team_info(name: str) -> dict:
-    code, primary, secondary = TEAMS.get(name, (name[:3].upper(), "#888888", "#ffffff"))
+    code, home, away = TEAMS.get(name, (name[:3].upper(), kit("solid", ["#888888"]), WHITE))
     return {
         "slug": slugify(name),
         "name": ITALIAN_NAMES.get(name, name),
         "code": code,
-        "primary": primary,
-        "secondary": secondary,
+        "kit": home,
+        "away_kit": away,
     }
 
 

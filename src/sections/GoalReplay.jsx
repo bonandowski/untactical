@@ -6,6 +6,7 @@ import Legend from '../components/Legend.jsx';
 import { useJson } from '../lib/data.js';
 import { FULL, clamp01, ease, lerp, wavyPath } from '../lib/pitch.js';
 import { TT } from '../lib/theme.js';
+import { matchKits } from '../lib/kits.jsx';
 
 // Dybala vs Lazio, 4 Dec 2015: 11 passes from his own half, xG 0.022.
 export const DEFAULT_GOAL = '3879637-1';
@@ -31,7 +32,7 @@ function buildTimeline(goal) {
 const progress = (T, seg) => clamp01((T - seg.start) / (seg.end - seg.start));
 
 function teamName(teams, slug) {
-  return teams.find((t) => t.slug === slug) || { slug, name: slug, code: slug.slice(0, 3).toUpperCase(), primary: '#888' };
+  return teams.find((t) => t.slug === slug) || { slug, name: slug, code: slug.slice(0, 3).toUpperCase(), kit: { p: 'solid', c: ['#888888'], num: '#fff' }, away_kit: { p: 'solid', c: ['#f4f4f4'], num: '#111' } };
 }
 
 export default function GoalReplay({ index, goalId, setGoalId }) {
@@ -101,6 +102,7 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
 
   const team = teamName(teams, entry.team);
   const opp = teamName(teams, entry.opp);
+  const kits = matchKits(teamName(teams, entry.home), teamName(teams, entry.away));
   const T = tl ? t * tl.total : 0;
 
   const showTip = (e, text) => {
@@ -268,12 +270,13 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
                     const actor = pl.i === actorId;
                     const recv = pl.i === receiverId;
                     const cls = `pl ${pl.tm ? 'pl-mate' : 'pl-opp'}${pl.exact ? ' pl-exact' : ' pl-est'}${pl.gk ? ' pl-gk' : ''}${actor ? ' pl-actor' : ''}${recv ? ' pl-recv' : ''}${actor && shooting ? ' pl-shooter' : ''}`;
+                    const k = kits[pl.tm ? entry.team : entry.opp];
                     const tipText = `#${pl.j ?? '?'} ${pl.n.toUpperCase()} · ${pl.r} · ${pl.exact ? 'POSIZIONE RILEVATA' : 'POSIZIONE STIMATA'}`;
                     return (
                       <g key={pl.i} className={cls} transform={`translate(${pl.x},${pl.y})`} onMouseMove={(e) => showTip(e, tipText)} onMouseLeave={() => setTip(null)}>
                         <circle r={4} className="hit" />
-                        <circle r={2.1} className="pl-dot" />
-                        <text y={0.8} textAnchor="middle" className="pl-num">{pl.j ?? ''}</text>
+                        <circle r={2.1} className="pl-dot" fill={k.fill} />
+                        <text y={0.8} textAnchor="middle" className="pl-num" style={{ fill: k.kit.num, stroke: k.kit.num === '#111111' ? '#fff' : '#000' }}>{pl.j ?? ''}</text>
                         {(actor || recv) && (
                           <text y={-3.3} textAnchor="middle" className="pl-label">{recv ? `→ ${pl.n.toUpperCase()}` : pl.n.toUpperCase()}</text>
                         )}
@@ -304,8 +307,8 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
           <Legend items={[
             { kind: 'line', color: TT.yellow, label: 'PASSAGGIO' },
             { kind: 'wave', color: TT.green, label: 'CONDUZIONE' },
-            { kind: 'dot', color: TT.cyan, label: team.code },
-            { kind: 'dot', color: TT.red, label: opp.code },
+            { kind: 'dot', color: kits[entry.team].fill, stroke: '#000', label: team.code },
+            { kind: 'dot', color: kits[entry.opp].fill, stroke: '#000', label: opp.code },
             { kind: 'ring', color: TT.white, label: 'POSIZIONE STIMATA' },
             { kind: 'dot', color: TT.white, stroke: TT.yellow, label: 'CHI HA LA PALLA' },
             { kind: 'line', color: TT.magenta, label: 'TIRO' },

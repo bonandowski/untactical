@@ -3,6 +3,7 @@ import shutil
 
 from common import OUT
 import build_goals
+import build_networks
 import build_index
 
 BUDGET_TOTAL = 25 * 1024 * 1024
@@ -13,6 +14,7 @@ def main() -> None:
     shutil.rmtree(OUT / "goals", ignore_errors=True)
     goals = build_goals.main()
     build_index.main(goals)
+    build_networks.main()
     files = [p for p in OUT.rglob("*.json")]
     total = sum(p.stat().st_size for p in files)
     biggest = max(files, key=lambda p: p.stat().st_size)

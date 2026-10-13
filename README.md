@@ -8,7 +8,7 @@ La specifica completa è in [`PLAN.md`](PLAN.md).
 | Pagina | Route | Stato |
 |---|---|---|
 | P.101 Gol replay | `#/gol`, `#/gol/{goal_id}` | ✅ |
-| P.201 Pass network + sonar | `#/rete` | 🚧 in allestimento |
+| P.201 Pass network + sonar | `#/rete` | ✅ |
 | P.301 Pressing / territorio | `#/pressing` | 🚧 in allestimento |
 | P.888 Dati e metodo | `#/dati` | ✅ |
 
@@ -46,9 +46,11 @@ Scelte non coperte da `PLAN.md`, o che se ne discostano:
 - **Stile Televideo** al posto del design system del piano (Sora/Inter, accento `#e63c5a`): font VT323 in bundle
   (`@fontsource/vt323`), palette teletext a 8 colori. Tono "sfottò bonario". Mockup delle alternative in `mockups/stile.html`.
 - **Solo tema scuro** (Televideo): niente toggle chiaro/scuro né `prefers-color-scheme`, il nero è l'identità del sito.
-- **Campo scuro** (è lo "schermo TV"). Compagni ciano, avversari rossi, portiere con
-  bordo giallo, tiratore magenta: colori teletext invece dei colori squadra, per contrasto garantito su qualsiasi
-  maglia. I colori squadra restano in `pipeline/common.py` per le prossime sezioni.
+- **Campo scuro** (è lo "schermo TV"); linee, passaggi e tiri in colori teletext.
+- **Maglie vere sui pallini**: ogni squadra ha prima e seconda maglia in `pipeline/common.py` (pattern `solid`,
+  `stripes`, `halves`, `band`, `diagonal`), disegnate come pattern SVG (`src/lib/kits.jsx`). Se i colori principali
+  di casa e trasferta sono troppo simili (distanza RGB < 140) la squadra in trasferta usa la seconda maglia.
+  Colori ricostruiti a memoria sulle divise 2015/16 e delle finali: indicativi, non ufficiali.
 - **Catena del gol**: tengo solo Pass, Carry e Dribble (i Ball Receipt non aggiungono movimento).
 - **Tutti i 22 giocatori a ogni step** (`pipeline/tracks.py`): StatsBomb open non ha tracking. Per ogni giocatore
   in campo (XI + cambi − espulsi) calcolo una posizione per keyframe (inizio di ogni azione + tiro): esatta se
@@ -66,6 +68,9 @@ Scelte non coperte da `PLAN.md`, o che se ne discostano:
   fase a gironi, non la finale. Restano 14 finali, 2004–2019.
 - **Lotteria dei rigori** (period 5) esclusa dai gol.
 - **Niente zoom automatico**: con tutti i 22 in campo serve sempre il campo intero.
+- **Pass network**: sonar su tutti i passaggi della partita (rimesse e calci d'inizio esclusi), non solo fino al
+  primo cambio come la rete. Possesso = somma delle durate dei possessi StatsBomb. Default: Napoli, la partita
+  con più passaggi. Frecce a dimensione fissa, archi curvi per separare A→B da B→A.
 - **DEFAULT_GOAL**: Dybala, Lazio–Juventus 0-2 del 04.12.2015: 11 passaggi, xG 0.022.
 
 ## Crediti
