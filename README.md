@@ -12,6 +12,8 @@ La specifica completa è in [`PLAN.md`](PLAN.md).
 | P.301 Pressing / territorio | `#/pressing` | 🚧 in allestimento |
 | P.888 Dati e metodo | `#/dati` | ✅ |
 
+All'apertura parte un'accensione da tubo catodico + ricerca pagina Televideo (una volta per sessione, saltabile, disattivata con `prefers-reduced-motion`).
+
 Easter egg: digita un numero di pagina a tre cifre (101, 201, 301, 888) ovunque nel sito.
 
 ## Sviluppo

@@ -5,6 +5,7 @@ import Placeholder from './sections/Placeholder.jsx';
 import PassNetwork from './sections/PassNetwork.jsx';
 import { useJson } from './lib/data.js';
 import { KitDefs } from './lib/kits.jsx';
+import BootScreen from './components/BootScreen.jsx';
 
 export const PAGES = [
   { route: 'gol', page: 101, label: 'GOL', color: 'red' },
@@ -70,6 +71,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <BootScreen />
       <a className="skip" href="#main">Salta al contenuto</a>
       {index && <KitDefs teams={index.teams} />}
       <header className="topbar">
