@@ -433,3 +433,20 @@ button, input, select { font: inherit; }
   .press-pitch .pitch-v { max-height: none; }
   .press-sub { font-size: 14px; }
 }
+
+/* Goal "palinsesto": independent filters + goal list */
+.palinsesto .chips-scroll { margin-top: 10px; }
+.list-head { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 4px; color: var(--yellow); }
+.palinsesto .results { max-height: 340px; margin-top: 0; }
+.goal-list { columns: auto !important; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0 18px; }
+.goal-list button { width: 100%; display: grid; grid-template-columns: 3ch 1fr auto; grid-template-areas: "min who xg" "min match match"; gap: 0 8px; padding: 4px 2px; border-bottom: 1px dashed #333; }
+.goal-list button.on { background: var(--blue); color: #fff; }
+.gl-min { grid-area: min; color: var(--cyan); }
+.gl-who { grid-area: who; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gl-match { grid-area: match; color: var(--dim); font-size: 0.85em; }
+.gl-xg { grid-area: xg; color: var(--magenta); }
+.more { margin: 8px 0 2px; }
+@media (max-width: 700px) {
+  .goal-list { grid-template-columns: 1fr; }
+  .palinsesto .results { max-height: 50svh; }
+}
