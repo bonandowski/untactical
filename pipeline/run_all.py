@@ -1,4 +1,6 @@
 """Run the whole pipeline and report output size against the budget."""
+import shutil
+
 from common import OUT
 import build_goals
 import build_index
@@ -8,6 +10,7 @@ BUDGET_FILE = 1.5 * 1024 * 1024
 
 
 def main() -> None:
+    shutil.rmtree(OUT / "goals", ignore_errors=True)
     goals = build_goals.main()
     build_index.main(goals)
     files = [p for p in OUT.rglob("*.json")]

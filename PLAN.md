@@ -1,7 +1,7 @@
 # Calcio Open Viz — Piano di progetto
 
 Minisito statico con tre visualizzazioni interattive sul calcio, costruite su dati open StatsBomb.
-Perimetro dati: **Serie A 2015/16 (380 partite)** + **finali di Champions League 1999–2019**.
+Perimetro dati: **Serie A 2015/16 (380 partite)** + **finali di Champions League 2004–2019**.
 
 Questo file è la specifica di riferimento. Leggilo tutto prima di iniziare, poi procedi fase per fase
 (sezione 9). Non saltare la fase 1: tutto il resto dipende dai JSON pre-calcolati.

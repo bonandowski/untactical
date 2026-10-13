@@ -14,7 +14,7 @@ CL = {
     "key": "champions",
     "name": "Champions League",
     "competition_id": 16,
-    "season_ids": [1, 2, 4, 21, 22, 23, 24, 25, 26, 27, 37, 39, 41, 44, 76],
+    "season_ids": [1, 2, 4, 21, 22, 23, 24, 25, 26, 27, 37, 39, 41, 44],
 }
 COMPETITIONS = [SERIE_A, CL]
 

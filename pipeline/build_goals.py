@@ -10,6 +10,7 @@ from common import (
     OUT, load_competitions, load_events, match_meta, player_names, pt, r1, short_name,
     team_info, ts_seconds, write_json,
 )
+from tracks import build_tracks
 
 CHAIN_TYPES = {"Pass", "Carry", "Dribble"}
 MAX_ACTIONS = 8
@@ -177,8 +178,11 @@ def build_match(m: dict) -> list[dict]:
             else:
                 end, detail = s, ""
                 ok = c.get("dribble", {}).get("outcome", {}).get("name") == "Complete"
+            rec = (c.get("pass") or {}).get("recipient")
             actions.append({
                 "k": kind, "p": short_name(person(c.get("player"))["name"]) if c.get("player") else "",
+                "pid": c.get("player", {}).get("id"),
+                **({"to": short_name(person(rec)["name"]), "tid": rec["id"]} if rec else {}),
                 "s": s, "e": end, "t": r1(ts_seconds(c["timestamp"]) - first_t),
                 "d": r1(c.get("duration") or 0.5), "x": detail, "ok": ok,
             })
@@ -189,14 +193,8 @@ def build_match(m: dict) -> list[dict]:
             assist = person(by_id[kp].get("player"))
 
         scorer = person(e["player"])
-        ff = [{
-            "x": r1(f["location"][0]), "y": r1(f["location"][1]),
-            "n": short_name(names.get(f["player"]["id"], {"name": f["player"]["name"]})["name"]),
-            "r": POSITION.get(f["position"]["name"], f["position"]["name"].lower()),
-            "tm": f["teammate"], **({"gk": True} if f["position"]["name"] == "Goalkeeper" else {}),
-        } for f in shot.get("freeze_frame", [])]
-        ff.append({"x": r1(e["location"][0]), "y": r1(e["location"][1]), "n": scorer["short"],
-                   "r": POSITION.get(e["position"]["name"], ""), "tm": True, "sh": True})
+        key_times = [a["t"] for a in actions] + [r1(shot_t - first_t)]
+        players = build_tracks(events, e, key_times, first_t, names, POSITION)
 
         xg = round(shot.get("statsbomb_xg", 0), 3)
         shot_type = SHOT_TYPE.get(shot["type"]["name"], shot["type"]["name"].lower())
@@ -250,7 +248,7 @@ def build_match(m: dict) -> list[dict]:
             "technique": TECHNIQUE.get(shot["technique"]["name"], ""),
             "penalty": penalty, "dist": r1(dist),
             "start": pt(e["location"]), "end": pt(shot["end_location"]),
-            "chain": actions, "ff": ff, "secs": r1(secs), "passes": n_passes,
+            "chain": actions, "kt": key_times, "pl": players, "secs": r1(secs), "passes": n_passes,
             "tags": tags, "badges": badges,
         }
         goal["line"] = describe(goal, n_passes, secs, start_x)

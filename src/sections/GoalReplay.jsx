@@ -4,7 +4,7 @@ import Selector from '../components/Selector.jsx';
 import Scrubber from '../components/Scrubber.jsx';
 import Legend from '../components/Legend.jsx';
 import { useJson } from '../lib/data.js';
-import { clamp01, ease, lerp, viewFor, wavyPath } from '../lib/pitch.js';
+import { FULL, clamp01, ease, lerp, wavyPath } from '../lib/pitch.js';
 import { TT } from '../lib/theme.js';
 
 // Dybala vs Lazio, 4 Dec 2015: 11 passes from his own half, xG 0.022.
@@ -21,8 +21,8 @@ function buildTimeline(goal) {
     t += dur;
     return seg;
   });
-  const ff = { start: t, end: t + 0.8 };
-  t += 0.8;
+  const ff = { start: t, end: t + 0.35 };
+  t += 0.35;
   const shot = { start: t, end: t + 0.55 };
   t += 0.55;
   return { total: t + 1.2, intro: 0.7, actions, ff, shot };
@@ -128,6 +128,40 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
   }
   const done = shotP >= 1;
 
+  // Every player, interpolated between the keyframes of the current stepIdx.
+  let stepIdx = -1;
+  let stepP = 0;
+  let players = [];
+  if (goal && tl) {
+    goal.chain.forEach((a, i) => {
+      const p = progress(T, tl.actions[i]);
+      if (p > 0) { stepIdx = i; stepP = p; }
+    });
+    const n = goal.chain.length;
+    const from = stepIdx < 0 ? 0 : stepIdx;
+    const to = stepIdx < 0 ? 0 : Math.min(stepIdx + 1, n);
+    const w = stepIdx < 0 ? 0 : ease(stepP);
+    players = goal.pl.map((pl) => {
+      const a = pl.k[from];
+      const b = pl.k[to];
+      const exact = (w < 0.5 ? a[2] : b[2]) === 1;
+      return { ...pl, x: lerp(a[0], b[0], w), y: lerp(a[1], b[1], w), exact };
+    });
+  }
+  const shooting = ffOpacity > 0;
+  const cur = !shooting && stepIdx >= 0 ? goal.chain[stepIdx] : null;
+  const actorId = shooting ? goal?.scorer.id : cur?.pid;
+  const receiverId = cur && cur.k === 'pass' ? cur.tid : null;
+  let ticker = 'PALLA AL CENTRO... QUASI.';
+  if (goal && shooting) {
+    ticker = `TIRO DI ${goal.scorer.short.toUpperCase()} (${goal.body.toUpperCase()})${done ? ' ........ GOL' : ''}`;
+  } else if (cur) {
+    const what = cur.k === 'pass'
+      ? `PASSAGGIO${cur.x ? ` ${cur.x.toUpperCase()}` : ''}: ${cur.p.toUpperCase()} → ${(cur.to || '???').toUpperCase()}${cur.ok ? '' : ' (SBAGLIATO)'}`
+      : cur.k === 'carry' ? `CONDUZIONE: ${cur.p.toUpperCase()} PORTA PALLA` : `DRIBBLING: ${cur.p.toUpperCase()}${cur.ok ? ' SALTA L\'UOMO' : ' CI PROVA'}`;
+    ticker = `AZIONE ${stepIdx + 1}/${goal.chain.length} · ${what}`;
+  }
+
   return (
     <section className="section" aria-labelledby="gol-title">
       <header className="section-head">
@@ -196,7 +230,7 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
               <div className="loading">{loading ? 'PAGINA IN ARRIVO... 101... 102... 103...' : 'SEGNALE ASSENTE'}</div>
             )}
             {goal && tl && (
-              <Pitch view={viewFor(goal)} label={`Replay del gol di ${goal.scorer.name} al minuto ${goal.minute}`} goalGlow={done ? 1 : shotP}>
+              <Pitch view={FULL} label={`Replay del gol di ${goal.scorer.name} al minuto ${goal.minute}`} goalGlow={done ? 1 : shotP}>
                 <defs>
                   <marker id="arrow" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
                     <path d="M0,0L6,3L0,6z" fill={TT.yellow} />
@@ -229,22 +263,24 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
                   );
                 })}
 
-                {ffOpacity > 0 && (
-                  <g style={{ opacity: ffOpacity }}>
-                    {goal.ff.map((f, i) => (
-                      <g key={i} onMouseMove={(e) => showTip(e, `${f.n.toUpperCase()} · ${f.r}${f.sh ? ' · TIRATORE' : ''}`)} onMouseLeave={() => setTip(null)}>
-                        <circle cx={f.x} cy={f.y} r={4} className="hit" />
-                        <circle
-                          cx={f.x} cy={f.y} r={f.sh ? 2.1 : 1.7}
-                          className={`ff ${f.tm ? 'ff-mate' : 'ff-opp'}${f.gk ? ' ff-gk' : ''}${f.sh ? ' ff-shooter' : ''}`}
-                        />
+                <g className="players">
+                  {players.map((pl) => {
+                    const actor = pl.i === actorId;
+                    const recv = pl.i === receiverId;
+                    const cls = `pl ${pl.tm ? 'pl-mate' : 'pl-opp'}${pl.exact ? ' pl-exact' : ' pl-est'}${pl.gk ? ' pl-gk' : ''}${actor ? ' pl-actor' : ''}${recv ? ' pl-recv' : ''}${actor && shooting ? ' pl-shooter' : ''}`;
+                    const tipText = `#${pl.j ?? '?'} ${pl.n.toUpperCase()} · ${pl.r} · ${pl.exact ? 'POSIZIONE RILEVATA' : 'POSIZIONE STIMATA'}`;
+                    return (
+                      <g key={pl.i} className={cls} transform={`translate(${pl.x},${pl.y})`} onMouseMove={(e) => showTip(e, tipText)} onMouseLeave={() => setTip(null)}>
+                        <circle r={4} className="hit" />
+                        <circle r={2.1} className="pl-dot" />
+                        <text y={0.8} textAnchor="middle" className="pl-num">{pl.j ?? ''}</text>
+                        {(actor || recv) && (
+                          <text y={-3.3} textAnchor="middle" className="pl-label">{recv ? `→ ${pl.n.toUpperCase()}` : pl.n.toUpperCase()}</text>
+                        )}
                       </g>
-                    ))}
-                    {goal.ff.filter((f) => f.sh).map((f) => (
-                      <text key="sh" x={f.x} y={f.y - 3.4} className="ff-label" textAnchor="middle">{f.n.toUpperCase()}</text>
-                    ))}
-                  </g>
-                )}
+                    );
+                  })}
+                </g>
 
                 {shotP > 0 && (
                   <path d={`M${goal.start.join(',')}L${goal.end.slice(0, 2).join(',')}`} className="shot" pathLength={1} strokeDasharray={`${shotP} 1`} />
@@ -261,6 +297,7 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
             {tip && <div className="tip" style={{ left: tip.x, top: tip.y }} role="tooltip">{tip.text}</div>}
           </div>
 
+          {goal && <p className="ticker" aria-hidden="true"><span className="ticker-tag">IN ONDA</span> {ticker}</p>}
           {tl && (
             <Scrubber t={t} setT={setT} playing={playing} setPlaying={setPlaying} speed={speed} setSpeed={setSpeed} duration={tl.total} />
           )}
@@ -269,7 +306,8 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
             { kind: 'wave', color: TT.green, label: 'CONDUZIONE' },
             { kind: 'dot', color: TT.cyan, label: team.code },
             { kind: 'dot', color: TT.red, label: opp.code },
-            { kind: 'dot', color: TT.red, stroke: TT.yellow, label: 'PORTIERE' },
+            { kind: 'ring', color: TT.white, label: 'POSIZIONE STIMATA' },
+            { kind: 'dot', color: TT.white, stroke: TT.yellow, label: 'CHI HA LA PALLA' },
             { kind: 'line', color: TT.magenta, label: 'TIRO' },
           ]}
           />
@@ -321,7 +359,7 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
         <ul>
           <li>Prendiamo ogni tiro StatsBomb con esito «Goal» (autogol esclusi, rigori in partita inclusi, lotterie dei rigori escluse).</li>
           <li>La catena è il possesso della squadra che segna: passaggi, conduzioni e dribbling, fino a 8 azioni prima del tiro.</li>
-          <li>I giocatori in campo sono il «freeze frame» del tiro: solo quelli inquadrati dalla telecamera, quindi spesso meno di 22.</li>
+          <li>StatsBomb fotografa le posizioni di tutti solo al momento del tiro (e solo chi è inquadrato). Negli altri istanti sono esatte solo le posizioni di chi compare in un evento (chi passa, chi riceve, chi pressa): le altre sono stimate dalla posizione media del giocatore nella partita, spostata verso la palla e agganciata ai suoi eventi più vicini. Pallino pieno = rilevato, tratteggiato = stimato.</li>
           <li>xG è il modello StatsBomb: la probabilità che un tiro così finisca in rete. 0.02 = 2 su 100.</li>
           <li>Tag e commenti sono regole automatiche sui numeri (durata, passaggi, xG, minuto). Nessuno stagista è stato maltrattato.</li>
         </ul>

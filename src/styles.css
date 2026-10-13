@@ -137,12 +137,23 @@ button, input, select { font: inherit; }
 .act-dribble { fill: none; stroke: var(--carry); stroke-width: 0.5; stroke-dasharray: 0.8 0.6; }
 #arrow path { fill: var(--pass); }
 .hit { fill: transparent; cursor: help; }
-.ff { stroke: #000; stroke-width: 0.35; pointer-events: none; }
-.ff-mate { fill: var(--mate); }
-.ff-opp { fill: var(--opp); }
-.ff-gk { stroke: var(--gk); stroke-width: 0.7; }
-.ff-shooter { fill: var(--mate); stroke: var(--shot); stroke-width: 0.9; }
-.ff-label { fill: #fff; font-family: 'VT323', monospace; font-size: 3.6px; paint-order: stroke; stroke: #000; stroke-width: 0.6px; pointer-events: none; }
+.pl-dot { stroke: #000; stroke-width: 0.35; }
+.pl-mate .pl-dot { fill: var(--mate); }
+.pl-opp .pl-dot { fill: var(--opp); }
+.pl-est .pl-dot { fill-opacity: 0.28; stroke-dasharray: 0.9 0.6; stroke-width: 0.4; }
+.pl-mate.pl-est .pl-dot { stroke: var(--mate); }
+.pl-opp.pl-est .pl-dot { stroke: var(--opp); }
+.pl-gk .pl-dot { stroke: var(--gk); stroke-width: 0.6; }
+.pl-actor .pl-dot { stroke: var(--yellow); stroke-width: 0.9; stroke-dasharray: none; fill-opacity: 1; }
+.pl-recv .pl-dot { stroke: #fff; stroke-width: 0.8; stroke-dasharray: none; }
+.pl-shooter .pl-dot { stroke: var(--shot); stroke-width: 1; }
+.pl-num { font-family: 'VT323', monospace; font-size: 2.6px; pointer-events: none; fill: #000; }
+.pl-opp .pl-num { fill: #fff; }
+.pl-est .pl-num { fill: #fff; opacity: 0.85; }
+.pl-label { fill: #fff; font-family: 'VT323', monospace; font-size: 3.6px; paint-order: stroke; stroke: #000; stroke-width: 0.6px; pointer-events: none; }
+.pl-recv .pl-label { fill: var(--yellow); }
+.ticker { margin: 8px 0 0; padding: 2px 8px; background: var(--blue); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ticker-tag { background: var(--red); color: #000; padding: 0 6px; margin-right: 6px; }
 .shot { fill: none; stroke: var(--shot); stroke-width: 0.8; }
 .ball { fill: var(--ball); stroke: #000; stroke-width: 0.3; }
 

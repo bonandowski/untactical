@@ -19,8 +19,10 @@ def test_zaza_goal():
     g = zaza[0]
     assert g["minute"] == 88
     assert g["chain"], "chain should not be empty"
-    assert len(g["ff"]) >= 11
-    assert sum(1 for p in g["ff"] if p.get("sh")) == 1
+    assert len(g["pl"]) == 22
+    assert all(len(p["k"]) == len(g["chain"]) + 1 for p in g["pl"])
+    shooter = next(p for p in g["pl"] if p["i"] == g["scorer"]["id"])
+    assert shooter["k"][-1][2] == 1, "shooter position at the shot is exact"
     assert g["before"] == [0, 0] and g["after"] == [1, 0]
 
 
@@ -43,3 +45,7 @@ def test_coordinates_in_pitch():
                 for x, y in (a["s"], a["e"]):
                     assert 0 <= x <= 120.5 and 0 <= y <= 80.5
             assert 0 <= g["xg"] <= 1
+
+
+def test_no_cl_1999():
+    assert not (OUT / "goals" / "3750240.json").exists()

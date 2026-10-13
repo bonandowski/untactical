@@ -12,7 +12,7 @@ BASE = "https://raw.githubusercontent.com/statsbomb/open-data/master/data"
 RAW = Path(__file__).resolve().parent.parent / "data" / "raw"
 
 SERIE_A = (12, [27])
-CL_FINALS = (16, [1, 2, 4, 21, 22, 23, 24, 25, 26, 27, 37, 39, 41, 44, 76])
+CL_FINALS = (16, [1, 2, 4, 21, 22, 23, 24, 25, 26, 27, 37, 39, 41, 44])
 SEASONS = [SERIE_A, CL_FINALS]
 
 

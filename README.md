@@ -2,7 +2,7 @@
 
 > Il Televideo della tattica. Mille gol veri, ricostruiti passaggio per passaggio, con dati open StatsBomb.
 
-Sito statico (Vite + React + SVG) su **Serie A 2015/16** e **finali di Champions League 1999–2019**.
+Sito statico (Vite + React + SVG) su **Serie A 2015/16** e **finali di Champions League 2004–2019**.
 La specifica completa è in [`PLAN.md`](PLAN.md).
 
 | Pagina | Route | Stato |
@@ -49,8 +49,12 @@ Scelte non coperte da `PLAN.md`, o che se ne discostano:
 - **Campo scuro** (è lo "schermo TV"). Compagni ciano, avversari rossi, portiere con
   bordo giallo, tiratore magenta: colori teletext invece dei colori squadra, per contrasto garantito su qualsiasi
   maglia. I colori squadra restano in `pipeline/common.py` per le prossime sezioni.
-- **Catena del gol**: tengo solo Pass, Carry e Dribble (i Ball Receipt non aggiungono movimento). Il tiratore è
-  aggiunto al freeze frame con flag `sh`.
+- **Catena del gol**: tengo solo Pass, Carry e Dribble (i Ball Receipt non aggiungono movimento).
+- **Tutti i 22 giocatori a ogni step** (`pipeline/tracks.py`): StatsBomb open non ha tracking. Per ogni giocatore
+  in campo (XI + cambi − espulsi) calcolo una posizione per keyframe (inizio di ogni azione + tiro): esatta se
+  il giocatore compare in un evento in quell'istante (azione, ricezione, pressing, duello…) o nel freeze frame;
+  altrimenti interpolata tra i suoi eventi vicini e/o stimata dalla posizione media nella partita spostata verso la
+  palla. Flag `exact` per keyframe; nel frontend pieno = rilevato, tratteggiato = stimato. ~13% dei punti è esatto.
 - **Durate del replay stilizzate**: ogni azione dura 0.35 s + 0.22 × durata reale (max 3 s), così un'azione da
   47 s non dura 47 s.
 - **Palla inattiva**: tiro su punizione/corner, oppure possesso nato da corner/punizione e tiro entro 10 s
@@ -58,10 +62,10 @@ Scelte non coperte da `PLAN.md`, o che se ne discostano:
 - **Commenti e badge** generati a template in `build_goals.py` (regole su xG, durata, passaggi, minuto, distanza);
   la frase è scelta in modo deterministico con un hash dell'id del gol.
 - **Nomi giocatori**: uso `player_nickname` dai lineups quando c'è (Jorginho, non Jorge Luiz Frello Filho).
-- **Champions**: la stagione 1999/2000 di StatsBomb contiene Fiorentina–Manchester United (fase a gironi), non la
-  finale. Lasciata e dichiarata nella pagina Dati.
+- **Champions**: esclusa la stagione 1999/2000 (season_id 76): StatsBomb contiene Fiorentina–Manchester United della
+  fase a gironi, non la finale. Restano 14 finali, 2004–2019.
 - **Lotteria dei rigori** (period 5) esclusa dai gol.
-- **Zoom automatico** sulla metà offensiva quando tutta la catena sta oltre x = 58.
+- **Niente zoom automatico**: con tutti i 22 in campo serve sempre il campo intero.
 - **DEFAULT_GOAL**: Dybala, Lazio–Juventus 0-2 del 04.12.2015: 11 passaggi, xG 0.022.
 
 ## Crediti
