@@ -45,9 +45,8 @@ Scelte non coperte da `PLAN.md`, o che se ne discostano:
 
 - **Stile Televideo** al posto del design system del piano (Sora/Inter, accento `#e63c5a`): font VT323 in bundle
   (`@fontsource/vt323`), palette teletext a 8 colori. Tono "sfottò bonario". Mockup delle alternative in `mockups/stile.html`.
-- **Tema**: Televideo (scuro) di default, sempre. Il tema chiaro "carta rosa" è opzionale (toggle, salvato in
-  localStorage). `prefers-color-scheme` è ignorato di proposito: il nero è l'identità del sito.
-- **Il campo resta scuro in entrambi i temi** (è lo "schermo TV"). Compagni ciano, avversari rossi, portiere con
+- **Solo tema scuro** (Televideo): niente toggle chiaro/scuro né `prefers-color-scheme`, il nero è l'identità del sito.
+- **Campo scuro** (è lo "schermo TV"). Compagni ciano, avversari rossi, portiere con
   bordo giallo, tiratore magenta: colori teletext invece dei colori squadra, per contrasto garantito su qualsiasi
   maglia. I colori squadra restano in `pipeline/common.py` per le prossime sezioni.
 - **Catena del gol**: tengo solo Pass, Carry e Dribble (i Ball Receipt non aggiungono movimento). Il tiratore è

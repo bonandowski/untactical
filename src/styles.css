@@ -1,6 +1,5 @@
-/* Untactical — teletext design tokens. The pitch stays "TV night" in both themes. */
-:root,
-:root[data-theme='televideo'] {
+/* Untactical — teletext design tokens. Dark only. */
+:root {
   --bg: #000000;
   --fg: #ffffff;
   --dim: #b8b8b8;
@@ -19,26 +18,7 @@
   color-scheme: dark;
 }
 
-:root[data-theme='carta'] {
-  --bg: #f6dfe2;
-  --fg: #141414;
-  --dim: #5b4a4e;
-  --title: #0000d6;
-  --title-shadow: #ff4f9a;
-  --yellow: #7a5c00;
-  --green: #006b1f;
-  --red: #c4001a;
-  --cyan: #005f87;
-  --magenta: #a1006b;
-  --blue: #0000d6;
-  --bar-fg: #ffff00;
-  --panel: #fbeef0;
-  --chip-fg: #ffffff;
-  --line: #141414;
-  color-scheme: light;
-}
-
-/* Pitch palette (same in both themes: it's the TV screen). */
+/* Pitch palette. */
 :root {
   --pitch-bg: #062b10;
   --pitch-stripe: #083614;
@@ -96,10 +76,6 @@ button, input, select { font: inherit; }
 .ft-cyan { background: #00ffff; }
 .ft.on { border-bottom-color: var(--fg); text-decoration: underline; }
 .ft-num { opacity: 0.6; font-size: 18px; }
-.theme-toggle {
-  margin-left: auto; background: transparent; color: var(--fg);
-  border: 2px solid var(--fg); padding: 0 10px; cursor: pointer;
-}
 
 .brand { margin: 22px 0 8px; }
 .brand-name {
@@ -192,7 +168,6 @@ button, input, select { font: inherit; }
   min-width: 40px; min-height: 36px; padding: 0 8px; cursor: pointer;
 }
 .btn-play { background: var(--yellow); color: #000; font-size: 20px; }
-:root[data-theme='carta'] .btn-play { background: #ffff00; }
 .speeds { display: flex; gap: 4px; }
 .btn-speed.on { background: var(--cyan); color: var(--chip-fg); border-color: var(--cyan); }
 

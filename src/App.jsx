@@ -3,7 +3,6 @@ import GoalReplay from './sections/GoalReplay.jsx';
 import About from './sections/About.jsx';
 import Placeholder from './sections/Placeholder.jsx';
 import { useJson } from './lib/data.js';
-import { getInitialTheme, saveTheme } from './lib/theme.js';
 
 export const PAGES = [
   { route: 'gol', page: 101, label: 'GOL', color: 'red' },
@@ -28,7 +27,6 @@ function useClock() {
 
 export default function App() {
   const [loc, setLoc] = useState(parseHash);
-  const [theme, setTheme] = useState(getInitialTheme);
   const [typed, setTyped] = useState('');
   const [notFound, setNotFound] = useState(false);
   const { data: index, error } = useJson('index.json');
@@ -39,11 +37,6 @@ export default function App() {
     window.addEventListener('hashchange', on);
     return () => window.removeEventListener('hashchange', on);
   }, []);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    saveTheme(theme);
-  }, [theme]);
 
   const current = PAGES.find((p) => p.route === loc.route);
   useEffect(() => { document.title = `Untactical · P.${current.page}`; }, [current]);
@@ -88,13 +81,6 @@ export default function App() {
             <span className="ft-num num">{p.page}</span> {p.label}
           </a>
         ))}
-        <button
-          type="button" className="theme-toggle"
-          onClick={() => setTheme(theme === 'televideo' ? 'carta' : 'televideo')}
-          aria-label={theme === 'televideo' ? 'Passa al tema chiaro (carta rosa)' : 'Passa al tema scuro (Televideo)'}
-        >
-          {theme === 'televideo' ? '☀ CARTA ROSA' : '☾ TELEVIDEO'}
-        </button>
       </nav>
 
       <div className="brand">
