@@ -37,8 +37,12 @@ function teamName(teams, slug) {
 }
 
 export default function GoalReplay({ index, goalId, setGoalId }) {
+  const [comp, setComp] = useState('tutte');
+  const [teamF, setTeamF] = useState('tutte');
   const [tag, setTag] = useState('tutti');
   const [query, setQuery] = useState('');
+  const [sort, setSort] = useState('date');
+  const [shown, setShown] = useState(30);
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
@@ -51,8 +55,6 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
 
   const { teams, goals: allGoals, matches } = index;
   const entry = allGoals.find((g) => g.id === goalId) || allGoals.find((g) => g.id === DEFAULT_GOAL) || allGoals[0];
-  const goals = useMemo(() => (tag === 'tutti' ? allGoals : allGoals.filter((g) => g.tags.includes(tag))), [allGoals, tag]);
-
   const { data: matchGoals, loading } = useJson(`goals/${entry.match_id}.json`);
   const goal = matchGoals?.find((g) => g.id === entry.id);
   const tl = useMemo(() => (goal ? buildTimeline(goal) : null), [goal]);
@@ -60,25 +62,36 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
   // Restart the replay whenever the goal changes.
   useEffect(() => { setT(0); setPlaying(true); setTip(null); }, [entry.id]);
 
-  // When the tag filter excludes the current goal, jump to the closest match.
-  useEffect(() => {
-    if (tag === 'tutti' || entry.tags.includes(tag)) return;
-    const next = goals.find((g) => g.team === entry.team && g.comp === entry.comp) || goals.find((g) => g.comp === entry.comp) || goals[0];
-    if (next) setGoalId(next.id);
-  }, [tag]);
+  // Independent filters: none of them drives the others, each one just narrows the list.
+  const dateOf = useMemo(() => Object.fromEntries(matches.map((m) => [m.match_id, m.date])), [matches]);
+  const list = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const out = allGoals.filter((g) => (comp === 'tutte' || g.comp === comp)
+      && (teamF === 'tutte' || g.home === teamF || g.away === teamF)
+      && (tag === 'tutti' || g.tags.includes(tag))
+      && (!q || g.scorer.toLowerCase().includes(q)));
+    const by = {
+      date: (x, y) => dateOf[y.match_id].localeCompare(dateOf[x.match_id]) || x.minute - y.minute,
+      improbable: (x, y) => x.xg - y.xg,
+      easy: (x, y) => y.xg - x.xg,
+    }[sort];
+    return out.sort(by);
+  }, [allGoals, comp, teamF, tag, query, sort, dateOf]);
+  useEffect(() => setShown(30), [comp, teamF, tag, query, sort]);
 
-  const compGoals = goals.filter((g) => g.comp === entry.comp);
-  const teamSlugs = [...new Set(compGoals.map((g) => g.team))];
-  const teamGoals = compGoals.filter((g) => g.team === entry.team);
-  const matchIds = [...new Set(teamGoals.map((g) => g.match_id))];
-  const pos = teamGoals.findIndex((g) => g.id === entry.id);
-
+  const pos = list.findIndex((g) => g.id === entry.id);
   const step = (dir) => {
-    const list = teamGoals.length ? teamGoals : goals;
-    const i = list.findIndex((g) => g.id === entry.id);
-    const next = list[(i + dir + list.length) % list.length];
-    if (next) setGoalId(next.id);
+    if (!list.length) return;
+    const next = pos < 0 ? list[0] : list[(pos + dir + list.length) % list.length];
+    setGoalId(next.id);
   };
+  const filtersOn = comp !== 'tutte' || teamF !== 'tutte' || tag !== 'tutti' || query.trim();
+  const resetFilters = () => { setComp('tutte'); setTeamF('tutte'); setTag('tutti'); setQuery(''); };
+  const teamOptions = [{ value: 'tutte', label: 'TUTTE' }, ...index.competitions.map((c) => ({
+    group: c.name.toUpperCase(),
+    options: teams.filter((t) => t.comps.includes(c.key) && (comp === 'tutte' || comp === c.key))
+      .map((t) => ({ value: t.slug, label: t.name.toUpperCase() })),
+  })).filter((g) => g.options.length)];
 
   useEffect(() => {
     const onKey = (e) => {
@@ -92,18 +105,6 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
-
-  const matchLabel = (mid) => {
-    const m = matches.find((x) => x.match_id === mid);
-    const h = teamName(teams, m.home).code;
-    const a = teamName(teams, m.away).code;
-    const when = m.comp === 'serie-a' ? `G${String(m.week).padStart(2, '0')}` : m.date.slice(0, 4);
-    return `${when} ${h}-${a} ${m.home_score}-${m.away_score}`;
-  };
-
-  const results = query.trim().length >= 2
-    ? goals.filter((g) => g.scorer.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 40)
-    : null;
 
   const team = teamName(teams, entry.team);
   const opp = teamName(teams, entry.opp);
@@ -186,67 +187,64 @@ export default function GoalReplay({ index, goalId, setGoalId }) {
 
       <div className="pager pager-top">
         <button type="button" className="btn" onClick={() => step(-1)} aria-label="Gol precedente">◀</button>
-        <span className="num">GOL {pos + 1}/{teamGoals.length} · {team.code}</span>
+        <span className="num">{pos >= 0 ? `GOL ${pos + 1}/${list.length}` : `${list.length} GOL IN LISTA`}</span>
         <button type="button" className="btn" onClick={() => step(1)} aria-label="Gol successivo">▶</button>
         <button type="button" className={`btn btn-drawer${drawer ? ' on' : ''}`} aria-expanded={drawer} aria-controls="gol-drawer" onClick={() => setDrawer(!drawer)}>
-          {drawer ? '✕ CHIUDI' : '☰ CAMBIA GOL'}
+          {drawer ? '✕ CHIUDI' : `☰ PALINSESTO${filtersOn ? ' •' : ''}`}
         </button>
       </div>
 
-      <div id="gol-drawer" className="drawer" hidden={!drawer}>
+      <div id="gol-drawer" className="drawer palinsesto" hidden={!drawer}>
         <div className="controls">
           <Selector
-            label="COMPETIZIONE" value={entry.comp}
-            onChange={(c) => { const g = goals.find((x) => x.comp === c); if (g) setGoalId(g.id); }}
-            options={index.competitions.map((c) => ({ value: c.key, label: c.name.toUpperCase() }))}
+            label="COMPETIZIONE" value={comp}
+            onChange={(c) => { setComp(c); if (c !== 'tutte' && teamF !== 'tutte' && !teams.find((t) => t.slug === teamF)?.comps.includes(c)) setTeamF('tutte'); }}
+            options={[{ value: 'tutte', label: 'TUTTE' }, ...index.competitions.map((c) => ({ value: c.key, label: c.name.toUpperCase() }))]}
           />
-          <Selector
-            label="SQUADRA" value={entry.team}
-            onChange={(s2) => { const g = compGoals.find((x) => x.team === s2); if (g) setGoalId(g.id); }}
-            options={teamSlugs.map((s2) => teamName(teams, s2)).sort((x, y) => x.name.localeCompare(y.name)).map((tm) => ({ value: tm.slug, label: tm.name.toUpperCase() }))}
-          />
-          <Selector
-            label="PARTITA" value={entry.match_id}
-            onChange={(mid) => { const g = teamGoals.find((x) => x.match_id === +mid); if (g) setGoalId(g.id); }}
-            options={matchIds.map((mid) => ({ value: mid, label: matchLabel(mid) }))}
-          />
-          <Selector
-            label="GOL" value={entry.id} onChange={setGoalId}
-            options={teamGoals.filter((g) => g.match_id === entry.match_id).map((g) => ({ value: g.id, label: `${g.minute}' ${g.scorer.toUpperCase()}` }))}
-          />
-        </div>
-
-        <div className="controls controls-2">
-          <div className="chips chips-scroll" role="group" aria-label="Filtra per tipo di gol">
-            {TAGS.map((x) => (
-              <button key={x} type="button" className={`chip${tag === x ? ' on' : ''}`} aria-pressed={tag === x} onClick={() => setTag(x)}>
-                {x.toUpperCase()}
-              </button>
-            ))}
-          </div>
+          <Selector label="SQUADRA IN CAMPO" value={teamF} onChange={setTeamF} options={teamOptions} />
           <label className="field search">
-            <span className="field-label">CERCA MARCATORE</span>
+            <span className="field-label">MARCATORE</span>
             <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="es. MILITO" aria-label="Cerca marcatore" />
           </label>
+          <Selector
+            label="ORDINA" value={sort} onChange={setSort}
+            options={[{ value: 'date', label: 'PIÙ RECENTI' }, { value: 'improbable', label: 'PIÙ IMPROBABILI (xG ↓)' }, { value: 'easy', label: 'PIÙ FACILI (xG ↑)' }]}
+          />
         </div>
 
-        {results && (
-          <div className="results" role="region" aria-label="Risultati ricerca">
-            {results.length === 0 ? (
-              <p className="empty">PAGINA NON DISPONIBILE. NESSUN GOL PER «{query.toUpperCase()}». RIPROVARE DOPO IL 90'.</p>
-            ) : (
-              <ul>
-                {results.map((g) => (
-                  <li key={g.id}>
-                    <button type="button" className={g.id === entry.id ? 'on' : ''} onClick={() => { setGoalId(g.id); setQuery(''); if (vertical) setDrawer(false); }}>
-                      <span className="num">{g.minute}'</span> {g.scorer.toUpperCase()} · {teamName(teams, g.home).code}-{teamName(teams, g.away).code} · xG {g.xg.toFixed(2)}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
+        <div className="chips chips-scroll" role="group" aria-label="Tipo di gol">
+          {TAGS.map((x) => (
+            <button key={x} type="button" className={`chip${tag === x ? ' on' : ''}`} aria-pressed={tag === x} onClick={() => setTag(x)}>
+              {x.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        <div className="list-head">
+          <span className="num">{list.length} GOL</span>
+          {filtersOn && <button type="button" className="chip" onClick={resetFilters}>✕ AZZERA FILTRI</button>}
+        </div>
+        <div className="results" role="region" aria-label="Elenco gol">
+          {list.length === 0 ? (
+            <p className="empty">PAGINA NON DISPONIBILE. NESSUN GOL CON QUESTI FILTRI. RIPROVARE DOPO IL 90'.</p>
+          ) : (
+            <ul className="goal-list">
+              {list.slice(0, shown).map((g) => (
+                <li key={g.id}>
+                  <button type="button" className={g.id === entry.id ? 'on' : ''} aria-current={g.id === entry.id ? 'true' : undefined} onClick={() => { setGoalId(g.id); if (vertical) setDrawer(false); }}>
+                    <span className="gl-min num">{g.minute}'</span>
+                    <span className="gl-who">{g.scorer.toUpperCase()}</span>
+                    <span className="gl-match num">{teamName(teams, g.home).code} {g.after[0]}-{g.after[1]} {teamName(teams, g.away).code} · {dateOf[g.match_id].slice(0, 4)}</span>
+                    <span className="gl-xg num">xG {g.xg.toFixed(2)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {list.length > shown && (
+            <button type="button" className="chip more" onClick={() => setShown(shown + 60)}>MOSTRA ALTRI {Math.min(60, list.length - shown)}</button>
+          )}
+        </div>
       </div>
 
       <div className="stage">

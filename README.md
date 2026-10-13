@@ -79,6 +79,8 @@ Scelte non coperte da `PLAN.md`, o che se ne discostano:
   diceva x < 60: ho usato la definizione standard). Linea difensiva = x media dei tocchi dei giocatori in ruolo
   "Back" a palla avversaria. Percentili per cella calcolati per competizione e per filtro. Heatmap: scala
   condivisa fra A e B, celle sotto il 15% del massimo trasparenti per far emergere le zone calde.
+- **Palinsesto gol**: filtri indipendenti (competizione, squadra in campo, tipo, marcatore) + ordinamento; nessuno
+  guida gli altri. ◀ ▶ scorrono la lista filtrata.
 - **DEFAULT_GOAL**: Milito, finale di Champions 2010 Bayern–Inter 0-2, 70' (finta su Van Buyten).
 - **Mobile-first**: sotto i 700px il campo è verticale (attacco verso l'alto, `projector()` in `src/lib/pitch.js`),
   i tasti Televideo diventano una barra fissa in basso, filtri in un pannello richiudibile, timeline scorrevole,
