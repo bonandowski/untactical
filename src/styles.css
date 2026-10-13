@@ -395,3 +395,41 @@ button, input, select { font: inherit; }
   .hint { display: none; }
 }
 @keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- Pressing ---------- */
+.controls-press { grid-template-columns: 1fr 1fr; }
+.seg-row { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 10px 0; }
+.seg { flex-wrap: nowrap; }
+.press-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.press-card { border: 2px solid var(--cyan); padding: 6px; min-width: 0; }
+.press-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 4px; }
+.press-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.badge-ppda { background: var(--yellow); color: #000; padding: 0 6px; white-space: nowrap; }
+.press-sub { color: var(--dim); font-size: 17px; margin: 4px 0 0; }
+.heat-cell { cursor: help; stroke: rgba(0, 0, 0, 0.25); stroke-width: 0.15; }
+.line-press line { stroke: var(--magenta); stroke-width: 0.7; }
+.line-def line { stroke: var(--cyan); stroke-width: 0.6; stroke-dasharray: 1.6 1.2; }
+.line-press text, .line-def text { font-family: 'VT323', monospace; font-size: 3.2px; paint-order: stroke; stroke: #000; stroke-width: 0.6px; }
+.line-press text { fill: var(--magenta); }
+.line-def text { fill: var(--cyan); }
+.heat-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 10px 0; font-size: 17px; color: var(--dim); }
+.heat-bar { display: inline-block; width: 120px; height: 10px; border: 1px solid #fff; }
+.lg-press { color: var(--magenta); }
+.lg-line { color: var(--cyan); }
+.strips { margin-top: 8px; }
+.strip { margin: 6px 0 10px; }
+.strip-head { display: flex; justify-content: space-between; font-size: 18px; color: var(--yellow); }
+.strip svg { width: 100%; height: auto; display: block; max-height: 70px; }
+.strip-axis { stroke: #444; stroke-width: 1; }
+.strip-dot { fill: #555; stroke: #000; }
+.strip-label { fill: #fff; font-family: 'VT323', monospace; font-size: 11px; }
+@media (max-width: 700px) {
+  .controls-press { grid-template-columns: 1fr 1fr; }
+  .seg-row { flex-direction: column; gap: 6px; }
+  .seg { overflow-x: auto; scrollbar-width: none; }
+  .press-grid { gap: 6px; }
+  .press-card { padding: 3px; }
+  .press-head { font-size: 17px; flex-wrap: wrap; }
+  .press-pitch .pitch-v { max-height: none; }
+  .press-sub { font-size: 14px; }
+}

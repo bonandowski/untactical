@@ -9,7 +9,7 @@ La specifica completa è in [`PLAN.md`](PLAN.md).
 |---|---|---|
 | P.101 Gol replay | `#/gol`, `#/gol/{goal_id}` | ✅ |
 | P.201 Pass network + sonar | `#/rete` | ✅ |
-| P.301 Pressing / territorio | `#/pressing` | 🚧 in allestimento |
+| P.301 Pressing / territorio | `#/pressing` | ✅ |
 | P.888 Dati e metodo | `#/dati` | ✅ |
 
 All'apertura parte un'accensione da tubo catodico + ricerca pagina Televideo (una volta per sessione, saltabile, disattivata con `prefers-reduced-motion`).
@@ -73,6 +73,12 @@ Scelte non coperte da `PLAN.md`, o che se ne discostano:
 - **Pass network**: sonar su tutti i passaggi della partita (rimesse e calci d'inizio esclusi), non solo fino al
   primo cambio come la rete. Possesso = somma delle durate dei possessi StatsBomb. Default: Napoli, la partita
   con più passaggi. Frecce a dimensione fissa, archi curvi per separare A→B da B→A.
+- **Pressing** (`pipeline/build_pressing.py`): recuperi = Ball Recovery riusciti + intercetti e contrasti vinti +
+  pressioni seguite entro 5 s da un nuovo possesso della squadra. PPDA classico: passaggi su azione
+  dell'avversario nel suo 60% di campo (x < 72) / contrasti + intercetti + falli della squadra in x > 48 (il piano
+  diceva x < 60: ho usato la definizione standard). Linea difensiva = x media dei tocchi dei giocatori in ruolo
+  "Back" a palla avversaria. Percentili per cella calcolati per competizione e per filtro. Heatmap: scala
+  condivisa fra A e B, celle sotto il 15% del massimo trasparenti per far emergere le zone calde.
 - **DEFAULT_GOAL**: Milito, finale di Champions 2010 Bayern–Inter 0-2, 70' (finta su Van Buyten).
 - **Mobile-first**: sotto i 700px il campo è verticale (attacco verso l'alto, `projector()` in `src/lib/pitch.js`),
   i tasti Televideo diventano una barra fissa in basso, filtri in un pannello richiudibile, timeline scorrevole,

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import GoalReplay from './sections/GoalReplay.jsx';
 import About from './sections/About.jsx';
-import Placeholder from './sections/Placeholder.jsx';
+import Pressing from './sections/Pressing.jsx';
 import PassNetwork from './sections/PassNetwork.jsx';
 import { useJson } from './lib/data.js';
 import { KitDefs } from './lib/kits.jsx';
@@ -98,12 +98,7 @@ export default function App() {
         {!index && !error && <p className="loading">PAGINA IN ARRIVO... 101... 102... 103...</p>}
         {index && loc.route === 'gol' && <GoalReplay index={index} goalId={loc.arg} setGoalId={setGoalId} />}
         {index && loc.route === 'rete' && <PassNetwork index={index} />}
-        {loc.route === 'pressing' && (
-          <Placeholder
-            page={301} title="CHI PRESSA CHI"
-            text="Mappe di pressing, PPDA e linea difensiva: chi morde alto e chi parcheggia il pullman. In allestimento: il pullman è ancora in officina."
-          />
-        )}
+        {index && loc.route === 'pressing' && <Pressing index={index} />}
         {loc.route === 'dati' && <About index={index} />}
       </main>
 

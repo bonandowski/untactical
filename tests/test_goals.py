@@ -59,3 +59,15 @@ def test_network_juve_napoli():
     assert m["res"] == "V" and m["gf"] == 1 and m["ga"] == 0
     assert 0 < m["kpi"]["poss"] < 100
     assert all(0 <= s[0] < 24 for sectors in m["sonar"].values() for s in sectors)
+
+
+def test_pressing_napoli():
+    data = json.loads((OUT / "pressing" / "napoli.json").read_text())
+    s = data["comps"]["serie-a"]
+    assert set(s) >= {"all|all", "1|home", "2|away"}
+    a = s["all|all"]
+    assert a["matches"] == 38 and len(a["rec"]) == 96 and len(a["pct"]) == 96
+    assert 5 < a["ppda"] < 25 and 30 < a["height"] < 70
+    assert abs(sum(a["terr"]) - 100) < 1
+    league = json.loads((OUT / "pressing" / "league.json").read_text())
+    assert len(league["serie-a"]["all|all"]) == 20
