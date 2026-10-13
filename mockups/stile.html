@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Untactical — tre stili</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;700;800&family=Inter:wght@400;600&family=Anton&family=Space+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #ddd; color: #111; }
+  .switch { position: sticky; top: 0; z-index: 10; display: flex; gap: 8px; padding: 10px 16px; background: #111; flex-wrap: wrap; }
+  .switch button { font: 600 14px Inter, sans-serif; padding: 8px 14px; border-radius: 999px; border: 1px solid #555; background: #222; color: #eee; cursor: pointer; }
+  .switch button[aria-selected="true"] { background: #fff; color: #111; }
+  .switch span { color: #999; font-size: 13px; align-self: center; margin-left: auto; }
+  .style { display: none; min-height: 100vh; padding: 32px 16px 64px; }
+  .style.on { display: block; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  svg { width: 100%; height: auto; display: block; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+  @media (max-width: 560px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+  .num { font-variant-numeric: tabular-nums; }
+  .copy { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+
+  /* ---------- A: Bar sport colto ---------- */
+  #a { background: #f6f5f1; color: #1b1c1f; }
+  #a h1 { font: 800 clamp(40px, 7vw, 76px)/0.95 Sora, sans-serif; letter-spacing: -0.03em; margin: 0; }
+  #a h1 em { font-style: normal; color: #e63c5a; }
+  #a .kicker { font: 600 12px Inter; letter-spacing: .14em; text-transform: uppercase; color: #e63c5a; margin-bottom: 10px; }
+  #a .sub { font-size: 18px; color: #555; max-width: 640px; margin: 14px 0 26px; }
+  #a nav { display: flex; gap: 18px; font: 600 14px Sora; margin-bottom: 36px; flex-wrap: wrap; }
+  #a nav a { color: #1b1c1f; text-decoration: none; border-bottom: 2px solid transparent; }
+  #a nav a.cur { border-color: #e63c5a; }
+  #a .card { background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 1px 0 #e6e3da; }
+  #a .kpi { background: #fff; border-radius: 14px; padding: 14px; }
+  #a .kpi b { font: 800 30px Sora; display: block; }
+  #a .kpi small { color: #777; font-size: 12px; }
+  #a .tag { display: inline-block; background: #e63c5a14; color: #c22d4a; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; margin: 0 6px 6px 0; }
+  #a .copy li { background: #fff; border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+  #a .copy li small { display: block; color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+  #a h3 { font: 700 18px Sora; margin: 28px 0 12px; }
+  #a .tip { position: relative; display: inline-block; background: #1b1c1f; color: #fff; padding: 8px 12px; border-radius: 10px; font-size: 13px; }
+
+  /* ---------- B: Fanzine punk ---------- */
+  #b { background: #f2ff3d; color: #0a0a0a; background-image: radial-gradient(#0a0a0a22 1px, transparent 1.2px); background-size: 6px 6px; }
+  #b h1 { font: 400 clamp(56px, 12vw, 140px)/0.85 Anton, sans-serif; text-transform: uppercase; margin: 0; transform: rotate(-2deg); }
+  #b h1 span { background: #0a0a0a; color: #f2ff3d; padding: 0 10px; display: inline-block; transform: rotate(3deg); }
+  #b .sub { font: 700 17px 'Space Mono', monospace; max-width: 620px; margin: 22px 0; background: #fff; padding: 10px 14px; border: 3px solid #0a0a0a; transform: rotate(.6deg); box-shadow: 6px 6px 0 #ff2fa0; }
+  #b nav { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+  #b nav a { font: 400 22px Anton; text-transform: uppercase; color: #0a0a0a; background: #fff; border: 3px solid #0a0a0a; padding: 2px 12px; text-decoration: none; }
+  #b nav a:nth-child(2) { transform: rotate(-3deg); } #b nav a:nth-child(3) { transform: rotate(2deg); }
+  #b nav a.cur { background: #ff2fa0; color: #fff; }
+  #b .card { background: #0a0a0a; padding: 14px; border: 3px solid #0a0a0a; box-shadow: 10px 10px 0 #ff2fa0; position: relative; }
+  #b .card::before { content: "REPLAY!!"; position: absolute; top: -18px; right: 18px; background: #ff2fa0; color: #fff; font: 400 20px Anton; padding: 2px 10px; transform: rotate(6deg); z-index: 2; }
+  #b .kpi { background: #fff; border: 3px solid #0a0a0a; padding: 10px; font-family: 'Space Mono', monospace; }
+  #b .kpi:nth-child(odd) { transform: rotate(-1.5deg); } #b .kpi:nth-child(even) { transform: rotate(1.5deg); }
+  #b .kpi b { font: 400 40px Anton; display: block; }
+  #b .kpi small { font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  #b .tag { display: inline-block; background: #0a0a0a; color: #f2ff3d; font: 700 12px 'Space Mono'; padding: 4px 8px; margin: 0 6px 8px 0; text-transform: uppercase; }
+  #b .tag:nth-child(2n) { background: #ff2fa0; color: #fff; transform: rotate(-3deg); }
+  #b .copy li { background: #fff; border: 3px solid #0a0a0a; padding: 10px 12px; font: 400 14px 'Space Mono'; }
+  #b .copy li small { display: block; font-weight: 700; color: #ff2fa0; font-size: 11px; text-transform: uppercase; }
+  #b h3 { font: 400 32px Anton; text-transform: uppercase; margin: 30px 0 12px; }
+  #b .tip { display: inline-block; background: #ff2fa0; color: #fff; border: 3px solid #0a0a0a; padding: 6px 10px; font: 700 13px 'Space Mono'; transform: rotate(-2deg); }
+
+  /* ---------- C: Televideo / Meme mode ---------- */
+  #c { background: #000; color: #fff; font-family: VT323, monospace; font-size: 22px; }
+  #c .bar { display: flex; justify-content: space-between; background: #0000d6; color: #ffff00; padding: 4px 10px; margin-bottom: 18px; }
+  #c h1 { font: 400 clamp(48px, 10vw, 104px)/0.9 VT323, monospace; margin: 0; color: #00ffff; text-shadow: 4px 4px 0 #ff00ff; }
+  #c .sub { color: #ffff00; margin: 10px 0 20px; max-width: 700px; }
+  #c nav { display: flex; gap: 0; margin-bottom: 26px; flex-wrap: wrap; }
+  #c nav a { color: #000; text-decoration: none; padding: 2px 14px; }
+  #c nav a:nth-child(1) { background: #ff0000; } #c nav a:nth-child(2) { background: #00ff00; } #c nav a:nth-child(3) { background: #ffff00; } #c nav a:nth-child(4) { background: #00ffff; }
+  #c .card { border: 2px solid #00ffff; padding: 10px; }
+  #c .kpi { border: 2px solid #ffff00; padding: 8px 10px; }
+  #c .kpi b { font-size: 44px; color: #00ff00; display: block; line-height: 1; }
+  #c .kpi small { color: #ffff00; }
+  #c .tag { display: inline-block; background: #ff00ff; color: #000; padding: 0 8px; margin: 0 6px 6px 0; }
+  #c .tag:nth-child(3n) { background: #00ff00; } #c .tag:nth-child(3n+1) { background: #00ffff; }
+  #c .copy li { border-left: 6px solid #ff00ff; padding: 4px 10px; background: #111; }
+  #c .copy li small { display: block; color: #00ffff; font-size: 16px; }
+  #c h3 { color: #000; background: #00ffff; display: inline-block; padding: 0 10px; font-weight: 400; margin: 28px 0 12px; font-size: 26px; }
+  #c .tip { display: inline-block; background: #0000d6; color: #fff; border: 2px solid #ffff00; padding: 4px 10px; }
+  #c .blink { animation: blink 1s steps(1) infinite; } @keyframes blink { 50% { opacity: 0; } }
+  #c .bot { background: #111; border: 2px dashed #00ff00; padding: 10px; margin-top: 12px; color: #00ff00; }
+
+  .note { font-size: 12px; opacity: .6; margin-top: 30px; font-family: Inter, sans-serif; }
+</style>
+</head>
+<body>
+<div class="switch" role="tablist" aria-label="Scegli lo stile">
+  <button role="tab" aria-selected="true" data-t="a">A · Bar sport colto</button>
+  <button role="tab" aria-selected="false" data-t="b">B · Fanzine punk</button>
+  <button role="tab" aria-selected="false" data-t="c">C · Televideo meme</button>
+  <span>mockup · dati finti</span>
+</div>
+
+<!-- ===================== A ===================== -->
+<section class="style on" id="a">
+ <div class="wrap">
+  <nav><a class="cur" href="#">Gol replay</a><a href="#">Chi passa a chi</a><a href="#">Chi pressa chi</a><a href="#">Dati e scuse</a></nav>
+  <div class="kicker">Untactical · Serie A 2015/16</div>
+  <h1>La tattica spiegata <em>a chi urla “tira!”</em> dal divano.</h1>
+  <p class="sub">Mille gol veri, ricostruiti passaggio per passaggio. Nessun allenatore è stato consultato durante la realizzazione di questo sito.</p>
+  <div class="grid">
+    <div class="card"><svg id="pa" viewBox="0 0 120 80" role="img" aria-label="Replay gol"></svg></div>
+    <div>
+      <span class="tag">contropiede</span><span class="tag">xG da ridere</span><span class="tag">assolo</span>
+      <h3 style="margin-top:8px">Zaza, 88'</h3>
+      <p style="margin:0 0 10px;color:#555">7 passaggi in 14 secondi, partiti dalla propria area. La difesa del Napoli era lì, fisicamente.</p>
+      <div class="tip">xG 0.08 — su 100 tiri così, ne segni 8. Lui ha scelto il primo.</div>
+    </div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><b class="num">58%</b><small>possesso (e non sapevano che farne)</small></div>
+    <div class="kpi"><b class="num">512</b><small>passaggi</small></div>
+    <div class="kpi"><b class="num">87%</b><small>riusciti</small></div>
+    <div class="kpi"><b class="num">Jorginho</b><small>ha toccato più palloni del magazziniere</small></div>
+  </div>
+  <h3>Microcopy</h3>
+  <ul class="copy">
+    <li><small>Caricamento</small>Sto rivedendo il VAR… (sono JSON, ci mette poco)</li>
+    <li><small>Ricerca vuota</small>Nessun gol per “Pellè di testa”. Strano, eh.</li>
+    <li><small>Nota metodologica</small>Come lo calcoliamo (per chi non si fida — giustamente)</li>
+    <li><small>PPDA tooltip</small>Passaggi che lasci fare all’avversario prima di disturbarlo. Basso = cane da pastore. Alto = pensionato al parco.</li>
+  </ul>
+  <p class="note">Font Sora + Inter · accento #e63c5a · ironia solo nei testi, grafici puliti.</p>
+ </div>
+</section>
+
+<!-- ===================== B ===================== -->
+<section class="style" id="b">
+ <div class="wrap">
+  <nav><a class="cur" href="#">Gol</a><a href="#">Passaggini</a><a href="#">Pressing</a><a href="#">Fonti</a></nav>
+  <h1>UNTAC<span>TICAL</span></h1>
+  <p class="sub">// fanzine di tattica per gente che ha smesso di leggere Wyscout. dati veri, opinioni discutibili.</p>
+  <div class="grid">
+    <div class="card"><svg id="pb" viewBox="0 0 120 80" role="img" aria-label="Replay gol"></svg></div>
+    <div>
+      <span class="tag">contropiede</span><span class="tag">gol da fantacalcio</span><span class="tag">assolo</span>
+      <h3 style="margin-top:6px">ZAZA. 88'. FINE.</h3>
+      <p style="font:700 14px 'Space Mono';margin:0 0 14px">7 passaggi. 14 secondi. 1 tiro che non doveva entrare.</p>
+      <div class="tip">xG 0.08 → CULO CERTIFICATO™</div>
+    </div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><b class="num">58%</b><small>possesso</small></div>
+    <div class="kpi"><b class="num">512</b><small>passaggi</small></div>
+    <div class="kpi"><b class="num">87%</b><small>riusciti</small></div>
+    <div class="kpi"><b class="num">JORGINHO</b><small>il frullatore</small></div>
+  </div>
+  <h3>Microcopy</h3>
+  <ul class="copy">
+    <li><small>Caricamento</small>ATTENDERE. STIAMO SPOGLIANDO 380 PARTITE.</li>
+    <li><small>Ricerca vuota</small>niente. zero. come i tiri in porta della Samp a marzo.</li>
+    <li><small>Nota metodologica</small>COME L’ABBIAMO FATTO (spoiler: python)</li>
+    <li><small>PPDA tooltip</small>QUANTO TI LASCIANO PASSARE. BASSO = MASTINI. ALTO = BAGNANTI.</li>
+  </ul>
+  <p class="note">Anton + Space Mono · giallo acido + rosa · sticker storti, ombre piene, retino.</p>
+ </div>
+</section>
+
+<!-- ===================== C ===================== -->
+<section class="style" id="c">
+ <div class="wrap">
+  <div class="bar"><span>P.101 UNTACTICAL</span><span>13.10 <span class="blink">█</span></span></div>
+  <nav><a href="#">GOL</a><a href="#">RETI</a><a href="#">PRESSING</a><a href="#">DATI</a></nav>
+  <h1>UNTACTICAL</h1>
+  <p class="sub">LA PAGINA DEL TELEVIDEO CHE TUO NONNO CONSULTAVA ALLE 17:50. ORA CON L'xG.</p>
+  <div class="grid">
+    <div class="card"><svg id="pc" viewBox="0 0 120 80" role="img" aria-label="Replay gol"></svg></div>
+    <div>
+      <span class="tag">CONTROPIEDE</span><span class="tag">ASSOLO</span><span class="tag">XG RIDICOLO</span>
+      <h3 style="margin-top:6px">ZAZA 88'</h3>
+      <div>JUVENTUS-NAPOLI 1-0</div>
+      <div class="tip" style="margin-top:10px">xG 0.08 ........ GOL</div>
+      <div class="bot">&gt; COMMENTO AUTOMATICO:<br>tiro da 0.08 xG al minuto 88. il modello statistico ha chiesto di essere sostituito.</div>
+    </div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><b class="num">58%</b><small>POSSESSO</small></div>
+    <div class="kpi"><b class="num">512</b><small>PASSAGGI</small></div>
+    <div class="kpi"><b class="num">87%</b><small>RIUSCITI</small></div>
+    <div class="kpi"><b class="num">JORGINHO</b><small>MVP DEL TIKITAKA</small></div>
+  </div>
+  <h3>MICROCOPY</h3>
+  <ul class="copy">
+    <li><small>CARICAMENTO</small>PAGINA IN ARRIVO... 101... 102... 103...</li>
+    <li><small>RICERCA VUOTA</small>PAGINA NON DISPONIBILE. RIPROVARE DOPO IL 90'.</li>
+    <li><small>BADGE AUTOMATICI</small>🥶 GOL DA FREEZER (xG &lt; 0.05) · 🧱 PULLMAN PARCHEGGIATO · 🧃 FANTACALCIO BONUS</li>
+    <li><small>PPDA TOOLTIP</small>QUANTO TI LASCIANO PALLEGGIARE. BASSO=GEGENPRESSING. ALTO=ORA DEL CAFFÈ.</li>
+  </ul>
+  <p class="note" style="font-family:VT323;font-size:16px">VT323 · palette Televideo RAI · commenti auto-generati e badge a ogni gol.</p>
+ </div>
+</section>
+
+<script>
+// Fake goal chain in StatsBomb coords (120x80, attack left->right)
+const chain = [[18,52],[30,62],[46,58],[60,40],[74,22],[88,30],[100,44]];
+const shot = { from: [100,44], to: [120,37.5] };
+const mates = [[100,44],[92,24],[96,58],[80,40]];
+const opp = [[104,38],[108,48],[102,30],[110,42],[96,50],[114,40]];
+const gk = [117,39];
+
+function pitch(id, c) {
+  const s = document.getElementById(id), L = c.line, w = c.lw;
+  let h = `<rect width="120" height="80" fill="${c.grass}"/>`;
+  if (c.stripes) for (let i = 0; i < 12; i += 2) h += `<rect x="${i*10}" width="10" height="80" fill="${c.stripes}"/>`;
+  h += `<g fill="none" stroke="${L}" stroke-width="${w}">
+    <rect x="0.5" y="0.5" width="119" height="79"/><line x1="60" y1="0" x2="60" y2="80"/>
+    <circle cx="60" cy="40" r="10"/><rect x="0.5" y="18" width="18" height="44"/><rect x="101.5" y="18" width="18" height="44"/>
+    <rect x="0.5" y="30" width="6" height="20"/><rect x="113.5" y="30" width="6" height="20"/></g>`;
+  h += `<line x1="120" y1="36" x2="120" y2="44" stroke="${c.accent}" stroke-width="1.6"/>`;
+  for (let i = 0; i < chain.length - 1; i++) {
+    const [x1,y1] = chain[i], [x2,y2] = chain[i+1];
+    h += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c.pass}" stroke-width="${c.pw}" stroke-dasharray="${i%2? '': '1.5 1'}" marker-end="url(#m${id})"/>`;
+  }
+  h += `<defs><marker id="m${id}" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L6,3L0,6z" fill="${c.pass}"/></marker></defs>`;
+  opp.forEach(([x,y]) => h += `<circle cx="${x}" cy="${y}" r="1.8" fill="${c.opp}" stroke="${c.oppStroke}" stroke-width=".4"/>`);
+  h += `<circle cx="${gk[0]}" cy="${gk[1]}" r="1.8" fill="${c.opp}" stroke="${c.accent}" stroke-width=".7"/>`;
+  mates.forEach(([x,y], i) => h += `<circle cx="${x}" cy="${y}" r="${i? 1.8: 2.4}" fill="${c.mate}" stroke="${i? c.mateStroke: c.accent}" stroke-width="${i? .4: .9}"/>`);
+  h += `<line x1="${shot.from[0]}" y1="${shot.from[1]}" x2="${shot.to[0]}" y2="${shot.to[1]}" stroke="${c.accent}" stroke-width="1"/>`;
+  h += `<circle cx="${chain[0][0]}" cy="${chain[0][1]}" r="1.3" fill="${c.ball}"/>`;
+  h += `<text x="4" y="76" font-size="3.4" fill="${c.label}" font-family="${c.font}">${c.caption}</text>`;
+  s.innerHTML = h;
+}
+pitch('pa', { grass:'#2f4a3a', stripes:'#33503f', line:'#ffffff99', lw:.4, pass:'#ffffffcc', pw:.5, accent:'#e63c5a', opp:'#9aa0a6', oppStroke:'#fff', mate:'#ffffff', mateStroke:'#1b1c1f', ball:'#fff', label:'#ffffffaa', font:'Inter', caption:'Juventus · ▶ 0:14 / 0:14' });
+pitch('pb', { grass:'#0a0a0a', stripes:null, line:'#f2ff3d', lw:.6, pass:'#f2ff3d', pw:.8, accent:'#ff2fa0', opp:'#555', oppStroke:'#f2ff3d', mate:'#f2ff3d', mateStroke:'#0a0a0a', ball:'#fff', label:'#ff2fa0', font:'Anton', caption:'▶ REPLAY · 14 SEC · 7 PASSAGGI' });
+pitch('pc', { grass:'#003300', stripes:'#002200', line:'#00ff00', lw:.5, pass:'#ffff00', pw:.6, accent:'#ff00ff', opp:'#ff0000', oppStroke:'#000', mate:'#00ffff', mateStroke:'#000', ball:'#fff', label:'#ffff00', font:'VT323', caption:'▶ 00:14  [SPAZIO]=PAUSA' });
+
+document.querySelectorAll('.switch button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.switch button').forEach(x => x.setAttribute('aria-selected', x === b));
+  document.querySelectorAll('.style').forEach(s => s.classList.toggle('on', s.id === b.dataset.t));
+  scrollTo(0, 0);
+});
+</script>
+</body>
+</html>
