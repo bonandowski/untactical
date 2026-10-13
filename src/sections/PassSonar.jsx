@@ -8,7 +8,7 @@ const INNER = 4;
 
 // Polar pass sonar: 24 sectors of 15°, radius = passes, colour = % completed.
 // 0° points to the attacking direction (right); y grows downwards as on the pitch.
-export default function PassSonar({ player, sonar, kitFill, onPrev, onNext, onClose }) {
+export default function PassSonar({ vertical = false, player, sonar, kitFill, onPrev, onNext, onClose }) {
   const [hover, setHover] = useState(null);
   const sectors = sonar || [];
   const max = Math.max(1, ...sectors.map((s) => s[1]));
@@ -37,7 +37,8 @@ export default function PassSonar({ player, sonar, kitFill, onPrev, onNext, onCl
         <line x1={-R} y1={0} x2={R} y2={0} className="sonar-axis" />
         <line x1={0} y1={-R} x2={0} y2={R} className="sonar-axis" />
         {sectors.map(([i, n, len, pct]) => {
-          const a0 = ((i * 15 + 90) * Math.PI) / 180;
+          // d3 arcs start at 12 o'clock: forward is right (+90°) or up (0°) on phones.
+          const a0 = ((i * 15 + (vertical ? 0 : 90)) * Math.PI) / 180;
           const d = wedge({ innerRadius: INNER, outerRadius: radius(n), startAngle: a0, endAngle: a0 + (15 * Math.PI) / 180 });
           return (
             <path
@@ -49,8 +50,10 @@ export default function PassSonar({ player, sonar, kitFill, onPrev, onNext, onCl
           );
         })}
         <circle r={INNER - 0.6} fill={kitFill} stroke="#000" strokeWidth="0.4" />
-        <text x={R + 1} y={-2} className="sonar-dir" textAnchor="end">ATTACCO →</text>
-        <text x={0} y={-R - 1.5} className="sonar-dir" textAnchor="middle">{max}</text>
+        {vertical
+          ? <text x={2} y={-R + 3} className="sonar-dir">ATTACCO ↑</text>
+          : <text x={R + 1} y={-2} className="sonar-dir" textAnchor="end">ATTACCO →</text>}
+        <text x={-R} y={-R + 3} className="sonar-dir">MAX {max}</text>
       </svg>
       <p className="sonar-read">
         {h ? `${h[1]} PASSAGGI · ${h[2]} M DI MEDIA · ${h[3]}% RIUSCITI` : 'PASSA SUGLI SPICCHI PER I DETTAGLI'}

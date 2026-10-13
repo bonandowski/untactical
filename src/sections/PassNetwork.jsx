@@ -3,7 +3,8 @@ import Pitch from '../components/Pitch.jsx';
 import Selector from '../components/Selector.jsx';
 import PassSonar from './PassSonar.jsx';
 import { useJson } from '../lib/data.js';
-import { FULL, ease, lerp } from '../lib/pitch.js';
+import { ease, lerp, projector } from '../lib/pitch.js';
+import useVertical from '../lib/useVertical.js';
 import { teamKit } from '../lib/kits.jsx';
 
 const DEFAULT_TEAM = 'serie-a:napoli';
@@ -92,6 +93,10 @@ export default function PassNetwork({ index }) {
   const [minEdge, setMinEdge] = useState(4);
   const [hl, setHl] = useState('none');
   const [sonarPid, setSonarPid] = useState(null);
+  const vertical = useVertical();
+  const P = projector(vertical);
+  const [drawer, setDrawer] = useState(() => !(window.matchMedia?.('(max-width: 700px)').matches));
+  const tlRef = useRef(null);
 
   const teamsBySlug = useMemo(() => Object.fromEntries(index.teams.map((t) => [t.slug, t])), [index]);
   const matches = useMemo(() => (data ? data.matches.filter((m) => m.comp === comp) : []), [data, comp]);
@@ -107,6 +112,10 @@ export default function PassNetwork({ index }) {
 
   const m = mi != null ? matches[mi] : null;
   const nodes = useTweenedNodes(m ? m.nodes : null);
+
+  useEffect(() => {
+    tlRef.current?.querySelector('.tl-dot.on')?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  }, [mi]);
 
   useEffect(() => {
     if (sonarPid && m && !m.nodes.some((n) => n.i === sonarPid)) setSonarPid(null);
@@ -130,7 +139,9 @@ export default function PassNetwork({ index }) {
       .map((t) => ({ value: `${c.key}:${t.slug}`, label: t.name.toUpperCase() })),
   }));
 
-  const pos = new Map(nodes.map((n) => [n.i, n]));
+  // Nodes in screen coordinates (vertical on phones); edges are computed from these.
+  const pnodes = nodes.map((n) => { const [x, y] = P([n.x, n.y]); return { ...n, x, y }; });
+  const pos = new Map(pnodes.map((n) => [n.i, n]));
   const edges = m ? m.edges.filter((e) => e[2] >= minEdge && pos.has(e[0]) && pos.has(e[1])) : [];
   const maxC = Math.max(1, ...edges.map((e) => e[2]));
   const strong = new Set(hl === 'edges' ? [...edges].sort((a, b) => b[2] - a[2]).slice(0, 3).map((e) => `${e[0]}-${e[1]}`) : []);
@@ -156,7 +167,16 @@ export default function PassNetwork({ index }) {
         <p className="tt-sub">Ogni pallino è un titolare nella sua posizione media, ogni filo i passaggi tra due compagni. Si gioca verso destra.</p>
       </header>
 
-      <div className="controls controls-net">
+      <div className="pager pager-top">
+        <button type="button" className="btn" onClick={() => setMi(Math.max(0, (mi ?? 0) - 1))} aria-label="Partita precedente">◀</button>
+        <span className="num">{team?.code} · {m ? label(m) : '...'}</span>
+        <button type="button" className="btn" onClick={() => setMi(Math.min(matches.length - 1, (mi ?? 0) + 1))} aria-label="Partita successiva">▶</button>
+        <button type="button" className={`btn btn-drawer${drawer ? ' on' : ''}`} aria-expanded={drawer} aria-controls="net-drawer" onClick={() => setDrawer(!drawer)}>
+          {drawer ? '✕ CHIUDI' : '☰ SQUADRA E FILTRI'}
+        </button>
+      </div>
+
+      <div className="controls controls-net drawer" id="net-drawer" hidden={!drawer}>
         <Selector label="SQUADRA" value={sel} onChange={setSel} options={options} />
         <label className="field">
           <span className="field-label">MINIMO PASSAGGI PER FILO: <span className="num hl">{minEdge}</span></span>
@@ -181,7 +201,7 @@ export default function PassNetwork({ index }) {
         </div>
       )}
 
-      <div className="timeline" role="group" aria-label="Partite della stagione">
+      <div className="timeline" ref={tlRef} role="group" aria-label="Partite della stagione">
         {matches.map((mm, i) => {
           const opp = teamsBySlug[mm.opp];
           return (
@@ -200,13 +220,15 @@ export default function PassNetwork({ index }) {
           <div className="pitch-box">
             {(!m || loading) && <div className="loading">PAGINA IN ARRIVO... 201... 202... 203...</div>}
             {m && (
-              <Pitch view={FULL} label={`Pass network ${team?.name}, ${label(m)}`}>
+              <Pitch vertical={vertical} label={`Pass network ${team?.name}, ${label(m)}`}>
                 <defs>
                   <marker id="net-arrow" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="2" markerHeight="2" markerUnits="userSpaceOnUse" orient="auto">
                     <path d="M0,0L6,3L0,6z" className="net-arrowhead" />
                   </marker>
                 </defs>
-                <text x={118} y={78} textAnchor="end" className="net-dir">ATTACCO →</text>
+                {vertical
+                  ? <text x={78} y={4} textAnchor="end" className="net-dir">ATTACCO ↑</text>
+                  : <text x={118} y={78} textAnchor="end" className="net-dir">ATTACCO →</text>}
                 <g>
                   {edges.map(([a, b, c]) => {
                     const A = pos.get(a);
@@ -240,7 +262,7 @@ export default function PassNetwork({ index }) {
                   })}
                 </g>
                 <g>
-                  {nodes.map((n) => {
+                  {pnodes.map((n) => {
                     const r = nodeR(n.t);
                     const on = hl === 'top' && n.i === topId;
                     const dim = hl === 'top' && n.i !== topId;
@@ -268,19 +290,14 @@ export default function PassNetwork({ index }) {
           </p>
         </div>
 
-        <aside className="panel" aria-label="Dettagli">
+        <aside className={`panel${sonarNode && vertical ? ' sheet' : ''}`} aria-label="Dettagli">
           {sonarNode ? (
             <PassSonar
-              player={sonarNode} sonar={m.sonar[String(sonarNode.i)]} kitFill={kit.fill}
+              vertical={vertical} player={sonarNode} sonar={m.sonar[String(sonarNode.i)]} kitFill={kit.fill}
               onPrev={() => cycle(-1)} onNext={() => cycle(1)} onClose={() => setSonarPid(null)}
             />
           ) : m && (
             <>
-              <div className="pager">
-                <button type="button" className="btn" onClick={() => setMi(Math.max(0, mi - 1))} aria-label="Partita precedente">◀</button>
-                <span className="num">PARTITA {mi + 1}/{matches.length}</span>
-                <button type="button" className="btn" onClick={() => setMi(Math.min(matches.length - 1, mi + 1))} aria-label="Partita successiva">▶</button>
-              </div>
               <div className="scoreline">
                 <span className={m.home ? 'hl' : ''}>{(m.home ? team?.name : teamsBySlug[m.opp]?.name)?.toUpperCase()}</span>
                 <span className="num score">{m.home ? `${m.gf}-${m.ga}` : `${m.ga}-${m.gf}`}</span>

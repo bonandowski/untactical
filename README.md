@@ -73,7 +73,10 @@ Scelte non coperte da `PLAN.md`, o che se ne discostano:
 - **Pass network**: sonar su tutti i passaggi della partita (rimesse e calci d'inizio esclusi), non solo fino al
   primo cambio come la rete. Possesso = somma delle durate dei possessi StatsBomb. Default: Napoli, la partita
   con più passaggi. Frecce a dimensione fissa, archi curvi per separare A→B da B→A.
-- **DEFAULT_GOAL**: Dybala, Lazio–Juventus 0-2 del 04.12.2015: 11 passaggi, xG 0.022.
+- **DEFAULT_GOAL**: Milito, finale di Champions 2010 Bayern–Inter 0-2, 70' (finta su Van Buyten).
+- **Mobile-first**: sotto i 700px il campo è verticale (attacco verso l'alto, `projector()` in `src/lib/pitch.js`),
+  i tasti Televideo diventano una barra fissa in basso, filtri in un pannello richiudibile, timeline scorrevole,
+  pass sonar in un pannello dal basso, tooltip al tocco (svaniscono dopo 2,5 s).
 
 ## Crediti
 
